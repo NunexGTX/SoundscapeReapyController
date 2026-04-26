@@ -1,6 +1,6 @@
 import reapy
 
-class Ambisonic:
+class AmbisonicENCoder:
     #sliderVals = [0,1] #This represents in between which values each parameter must be
 
     ambisonic_plugin_name = "VST: sparta_ambiENC (AALTO) (64ch)"
@@ -125,14 +125,3 @@ class Ambisonic:
             raise ValueError(f"{elevation_val}º is not a valid speaker elevation angle. Acceptable speaker rotation range: {str(self.__elevation_range)}")
         
     '''Static methods'''
-
-    '''This fuction returns the ambisonic fx either in the BUS track or master track (which will be accessed if Track_idx is 1)
-    Use this static method to get the FX object that contains the ambisonic VST plugin so you can create a new Ambisonic Object
-    Make sure the track with the Sparta Ambisonic ENC plugin is there and you pass along its track index if its not the master track'''
-    @staticmethod
-    def ambisonicFX(Track_idx = -1, ambisonicVST_name = ambisonic_plugin_name):
-        project = reapy.Project()
-        if Track_idx == -1:
-            return project.master_track.fxs[ambisonicVST_name]
-        
-        return reapy.Track(Track_idx,project).fxs[ambisonicVST_name]
