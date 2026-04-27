@@ -1,7 +1,7 @@
 import reapy
 import Reapy.Tracks as reapyTracks
 import Reapy.FX as reapyFX
-from Sparta.AmbisonicENCoder import AmbisonicENCoder
+from AudioPlugins.Sparta.AmbisonicENCoder import AmbisonicENCoder
 
 #To adjust the speaker adjustment in sparta's ambiENC we can modify its variable's value
 #The manual sliders for those are actually shown inside the VST's window if you press the "UI" button
@@ -16,7 +16,7 @@ print()
 print("--- Starting Ambisonic Control Test ---")
 print()
 
-ambisonicENC = AmbisonicENCoder(reapyFX.getFX_byName(project,AmbisonicENCoder.ambisonic_plugin_name,ambisonicENCBUSTrack),5)
+ambisonicENC = AmbisonicENCoder(reapyFX.getFX_byName(project,AmbisonicENCoder.plugin_name,ambisonicENCBUSTrack),5)
 
 #Set speaker example positions
 ambisonicENC.SpeakersPositions([(180,90),(180,90),(180,90),(180,90),(180,90)])
