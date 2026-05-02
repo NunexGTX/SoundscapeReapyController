@@ -1,0 +1,28 @@
+{
+    "sounds": [
+        {
+            "id": "stones",
+            "name": "Stones",
+            "fileName": "stones.wav",
+            "fileType": "wav",
+            "type": "standard",
+            "imagePath": "wplace goldshit.png"
+        },
+        {
+            "id": "bird_chirp",
+            "name": "Bird Chirps",
+            "fileName": "bird_chirp.wav",
+            "fileType": "wav",
+            "type": "standard",
+            "imagePath": ""
+        },
+        {
+            "id": "thunder",
+            "name": "Thunder 2",
+            "fileName": "thunders2.wav",
+            "fileType": "wav",
+            "type": "ambisonic",
+            "imagePath": "clorinde.png"
+        }
+    ]
+}
