@@ -69,6 +69,9 @@ SoundscapeVReapy *-- TracksSoundscapeDJManager
 package jsonUtils{
     class SoundscapeReapyControllerConfig{
         -config_json_location: str
+        -soundscpae_reapy_controller_dir_flag: str
+        -config_default: Dictionary
+        -config: Dictionary
         +ReapyTemplateProjectPath: str
         +SoundsLocation: str
         +SoundscapeVRUnityCommunicationPort: int
