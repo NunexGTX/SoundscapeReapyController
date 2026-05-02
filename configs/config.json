@@ -1,0 +1,12 @@
+{
+    "config":[
+        {
+            "ReapyTemplateProjectPath": "{REAPY_CONTROLLER_DIR}/SoundscapeReaper.RPP",
+            "SoundsLocation": "{REAPY_CONTROLLER_DIR}/SoundscapeReaper.RPP",
+            "SoundscapeVRUnityCommunicationPort": 6337,
+            "EncoderAmbisonicTrackName": "EncoderAmbisonicAudio",
+            "EncoderMonoAudioTrackName": "EncoderMonoAudio"
+        }
+    ]
+
+}
