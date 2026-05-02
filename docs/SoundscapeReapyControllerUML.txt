@@ -1,0 +1,201 @@
+@startuml
+
+metaclass SoundscapeVReapy{
+    -config: SoundscapeReapyControllerConfig
+    -Project: reapy.Project
+    -tracksSoundscapeDJManager: TracksSoundscapeDJManager
+    -soundscapeVRCommunicationService: SoundscapeVRCommunicationService
+    -reapyControllerConfig: SoundscapeReapyControllerConfig
+    -ReapyInit()
+    -Reset()
+    -main()
+}
+
+package TrackDiscJockey{
+    class TracksSoundscapeDJManager{
+        -audiosData: AudiosData
+        -reapyControllerConfig: SoundscapeReapyControllerConfig
+        -SoundTracks: list
+        -EncoderAmbisonic: Track
+        -EncoderMonoAudio: Track
+        -AmbiENC: AmbisonicENCoder
+        -AudioVolumeDBRange: tuple
+        -CurrentMaxAudioDuration: float
+        -MonoEncoderSources: int
+        -PartialAudioStretchFactor: float
+        -AvailableSoundEffects: list
+        +Playing: bool
+        +TrackSoundscapeDJManager(project: Project, reapyControllerConfig: SoundscapeReapyControllerConfig)
+        +CommandReceive(command: str)
+        -NewTrack(AudioID: str, SoundUUID: UUID, position: tuple, distanceRadius: float)
+        -SetTrackRedirect(track: Track, ambisonic: bool)
+        -SetMonoTrackEncoderRedirect(track: Track)
+        -SetAmbisonicTrackEncoderRedirect(track: Track)
+        -NewAudioDurations()
+        -ProjectNoTrackPause()
+        -AdjustPlayAreaTime()
+        -UpdateAudioPosition(SoundUUID: UUID, position: tuple)
+        -UpdateAudioDistanceRadius(SoundUUID: UUID, distanceRadius: float)
+        -CalculateDistanceDB(distanceRadius: float): float
+        -AddSoundEffect(effect_type:str, SoundUUID: UUID): int
+        -UpdateSoundEffect(SoundUUID: UUID, EffectIndex: int, params: list)
+        -RemoveSoundEffect(SoundUUID: UUID, EffectIndex: int)
+        -MuteTrack(SoundUUID: UUID)
+        -DeleteTrack(SoundUUID: UUID)
+        -FindTrackByUUID(SoundUUID: UUID)
+    }
+
+    dataclass SoundTrack{
+        +SoundUUID: UUID
+        +AudioID: str
+        +TrackName: str
+        +track: Track
+        +TrackIndex: int
+        +ambisonic: bool
+        +position: tuple
+        +distanceRadius: float
+        +currentVolumeDB: float
+        +SoundEffects: list
+        +mute: bool
+        +audio_duration_seconds: float
+    }
+
+    TracksSoundscapeDJManager *-- SoundTrack
+
+}
+
+SoundscapeVReapy *-- TracksSoundscapeDJManager
+
+package jsonUtils{
+    class SoundscapeReapyControllerConfig{
+        -config_json_location: str
+        +ReapyTemplateProjectPath: str
+        +SoundsLocation: str
+        +SoundscapeVRUnityCommunicationPort: int
+        +EncoderAmbisonicTrackName: str
+        +EncoderMonoAudioTrackName: str
+        +SoundscapeReapyControllerConfig()
+        -ReadConfig()
+    }
+
+    TracksSoundscapeDJManager o-- SoundscapeReapyControllerConfig
+
+    class AudiosData{
+        -audios_json_location: str
+        +AudiosInfo: list
+        +AudiosData()
+        +getAudioFileInfo(id: str): AudioInfo
+    }
+
+    dataclass AudioInfo{
+        +sound_id: str
+        +sound_name: str
+        +ambisonic: bool
+        +fileName: str
+    }
+
+    AudiosData ..> AudioInfo
+    TracksSoundscapeDJManager *-- AudiosData
+}
+
+SoundscapeVReapy *-- SoundscapeReapyControllerConfig
+
+package SoundscapeVRCommunications{
+    class SoundscapeVRCommunicationService{
+        -communication_port: int
+        -unity_server_ip: string
+        +SoundscapeVRCommunicationsService(config: SoundscapeReapyControllerConfig)
+        +ReceiveRequest(): str
+        +WaitForConnection()
+        +SendEffectIndex()
+    }
+    note right: Send more responses to unity if needed to confirm actions done
+
+}
+
+SoundscapeVReapy *-- SoundscapeVRCommunicationService
+SoundscapeVRCommunicationService o-- SoundscapeReapyControllerConfig
+
+package AudioPlugins{
+    abstract class AudioPluginController{
+        +sliderVals: tuple
+        +plugin_name: string
+        #param_defaults: list
+        #TrackFX: FX
+        +AudioPluginController(TrackFX: FX)
+        {abstract} #checkInitialParams(params: list)
+        {abstract} #setInitialParams(params: list)
+        #paramValCalc(x,min_val,max_val)
+    }
+
+    package SoundEffects{
+        note as N1
+            More Sound Effects will be added overtime if we end up needing them
+        end note
+
+        abstract class SoundEffect{
+            +effectParamsList: list
+            {abstract}updateSoundEffectParams(params: list)
+
+        }
+
+        SoundEffect <|-- AudioPluginController
+
+        class Reverb{
+            +Wet: float
+            -Wet_range: tuple
+            +Dry: float
+            -Dry_range: tuple
+            +Pre_Verb: float
+            -Pre_Verb_range: tuple
+            +Width: float
+            -With_range: tuple
+            +Pan: float
+            -Pan_range: tuple
+            +Reverb(TrackFX:FX)
+            +setWetValue(dbWet: float)
+            +setDryValue(dbWet: float)
+            +setPre_verb(ms: float)
+            +setWidth(width_val: float)
+            +setPan(pan_val:float)
+        }
+
+        Reverb <|-- SoundEffect
+
+    }
+    TracksSoundscapeDJManager *-- Reverb
+
+    package Sparta{
+
+        class AmbisonicENCoder{
+            -outputOrder_range: tuple
+            -ChannelOrderVals: dictionary
+            -NormTypeVals: dictionary
+            -source_range: tuple
+            -spatial_sound_positions_start_index: int
+            -azim_range: tuple
+            -elevation_range: tuple
+            -initial_sources: int
+            +AmbisonicENCoder(TrackFX: FX, params: list)
+            #checkInitialParams(params: list)
+            #setInitialParams(params: list)
+            -setOutputOrder(outputOrder_val: str)
+            -setChannelOrder(channelOrder_val: str)
+            -setNormType(normType_val: str)
+            +setNumSources(numSources_val: int)
+            +SpeakersPositions(sources_positions: list)
+            +SpeakerPositions(source_number: int, position: tuple)
+            +setSpeakerAzim(source_number: int, azim_value: float)
+            +setSpeakerElevation(source_numer: int, elevation_value: float)
+            -check_speaker_availability(source_number: int)
+            -check_azim_value(azim_val: float)
+            -check_elevation_value(elevation_val: float)
+        }
+
+        AmbisonicENCoder <|-- AudioPluginController
+    }
+
+    TracksSoundscapeDJManager *-- AmbisonicENCoder
+}
+
+@enduml

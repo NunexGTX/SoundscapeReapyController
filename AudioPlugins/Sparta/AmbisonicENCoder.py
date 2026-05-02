@@ -6,7 +6,7 @@ class AmbisonicENCoder(AudioPluginController):
 
     _param_defaults = [1,"ACN","SN3D"]
 
-    __outputOrder_range = [1,10]
+    __outputOrder_range = (1,10)
 
     __ChannelOrderVals = {
         "ACN": 0,
@@ -19,13 +19,13 @@ class AmbisonicENCoder(AudioPluginController):
         "FuMa": 1
     }
 
-    __source_range = [1,128]
+    __source_range = (1,128)
 
     __spatial_sound_positions_start_index = 4 #The parameter's index of the FX in which the values become related to the position elevation and rotation of the speaker sources
 
-    __azim_range = [-180,180]
+    __azim_range = (-180,180)
 
-    __elevation_range = [-90,90]
+    __elevation_range = (-90,90)
 
     def __init__(self,TrackFX,Sources: int,params = _param_defaults):
         super().__init__(TrackFX)
@@ -104,7 +104,7 @@ class AmbisonicENCoder(AudioPluginController):
         if params[2] not in self.__NormTypeVals:
             raise ValueError(f"{params[2]} is not a valid Norm Type Value")
         if not self.__source_range[0] <= self.Sources <= self.__source_range[1]:
-            raise ValueError(f"There can only be up to 128 channel speakers on your ambisonic setup with sparta, which means {sources} speakers isn't a valid amount of speakers. Either you typed wrong or don't know how to count")
+            raise ValueError(f"There can only be up to 128 channel speakers on your ambisonic setup with sparta, which means {self.Sources} speakers isn't a valid amount of speakers. Either you typed wrong or don't know how to count")
 
     def __check_speaker_availability(self,source_number):
         if not 1 <= source_number <= self.Sources:
