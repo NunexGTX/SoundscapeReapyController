@@ -106,13 +106,24 @@ SoundscapeVReapy *-- SoundscapeReapyControllerConfig
 package SoundscapeVRCommunications{
     class SoundscapeVRCommunicationService{
         -communication_port: int
-        -unity_server_ip: string
+        -host: str
+        -reapy_controller_ip: str
+        -buffer_size: int
+        -server_socket: socket
+        -client_socket: socket
+        -is_connected: bool
         +SoundscapeVRCommunicationsService(config: SoundscapeReapyControllerConfig)
-        +ReceiveRequest(): str
-        +WaitForConnection()
-        +SendEffectIndex()
+        +start()
+        +receiveRequest(): str
+        +sendResponse(response: str)
+        +disconnect()
+        -bind_server()
+        -wait_for_connection()
+        -where_to_connect_message()
+        -get_this_server_address()
+        -on_connection_lost()
+        -close_client()
     }
-    note right: Send more responses to unity if needed to confirm actions done
 
 }
 
