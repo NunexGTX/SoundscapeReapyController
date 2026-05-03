@@ -35,8 +35,6 @@ class SoundscapeReapyControllerConfig:
             print(f"Error: Invalid JSON format in {config_json}. Using default values.")
             self.__config = self.__config_default #Initialize with an empty dictionary if the json is read as invalid
 
-        print(self.__config)
-
         self.ReapyTemplateProjectPath = self.__reapy_template_project_path()
         self.SoundsLocation = self.__sounds_location()
         self.SoundscapeVRUnityCommunicationPort = self.__soundscape_vr_unity_communication_port()
