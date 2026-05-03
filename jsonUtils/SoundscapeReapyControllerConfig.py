@@ -7,7 +7,7 @@ class SoundscapeReapyControllerConfig:
     __soundscape_reapy_controller_dir_flag = "{REAPY_CONTROLLER_DIR}"
 
     __config_default = {'ReapyTemplateProjectPath': '{REAPY_CONTROLLER_DIR}/SoundscapeReaper.RPP', 
-                        'SoundsLocation': '{REAPY_CONTROLLER_DIR}/SoundscapeReaper.RPP', 
+                        'SoundsLocation': '{REAPY_CONTROLLER_DIR}/Sounds', 
                         'SoundscapeVRUnityCommunicationPort': 6337, 
                         'EncoderAmbisonicTrackName': 'EncoderAmbisonicAudio', 
                         'EncoderMonoAudioTrackName': 'EncoderMonoAudio'}
