@@ -2,12 +2,14 @@
 
 metaclass SoundscapeVReapy{
     -config: SoundscapeReapyControllerConfig
-    -Project: reapy.Project
+    -project: reapy.Project
+    -communicator: SoundscapeVRCommunicationService
     -tracksSoundscapeDJManager: TracksSoundscapeDJManager
-    -soundscapeVRCommunicationService: SoundscapeVRCommunicationService
     -reapyControllerConfig: SoundscapeReapyControllerConfig
     -ReapyInit()
+    -check_reaper_running
     -Reset()
+    -Exit()
     -main()
 }
 
@@ -106,24 +108,14 @@ SoundscapeVReapy *-- SoundscapeReapyControllerConfig
 package SoundscapeVRCommunications{
     class SoundscapeVRCommunicationService{
         -communication_port: int
-        -host: str
-        -reapy_controller_ip: str
-        -buffer_size: int
-        -server_socket: socket
-        -client_socket: socket
-        -is_connected: bool
+        -unity_server_ip: string
+        -config: SoundscapeReapyControllerConfig
         +SoundscapeVRCommunicationsService(config: SoundscapeReapyControllerConfig)
-        +start()
-        +receiveRequest(): str
-        +sendResponse(response: str)
-        +disconnect()
-        -bind_server()
-        -wait_for_connection()
-        -where_to_connect_message()
-        -get_this_server_address()
-        -on_connection_lost()
-        -close_client()
+        +ReceiveRequest(): str
+        +WaitForConnection()
+        +SendEffectIndex()
     }
+    note right: Send more responses to unity if needed to confirm actions done
 
 }
 
