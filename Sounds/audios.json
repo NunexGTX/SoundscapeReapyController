@@ -14,15 +14,87 @@
             "fileName": "bird_chirp.wav",
             "fileType": "wav",
             "type": "standard",
+            "imagePath": "person.jpg"
+        },
+        {
+            "id": "beach_people",
+            "name": "Beach with People",
+            "fileName": "ambisonic beach with people.wav",
+            "fileType": "wav",
+            "type": "ambisonic",
             "imagePath": ""
         },
         {
-            "id": "thunder",
-            "name": "Thunder 2",
-            "fileName": "thunders2.wav",
+            "id": "ambisonic_birds",
+            "name": "Ambisonic Birds",
+            "fileName": "ambisonic birds.wav",
             "fileType": "wav",
             "type": "ambisonic",
-            "imagePath": "clorinde.png"
+            "imagePath": "birds.png"
+        },
+        {
+            "id": "backrooms_light",
+            "name": "Office Light",
+            "fileName": "backrooms light.wav",
+            "fileType": "wav",
+            "type": "standard",
+            "imagePath": ""
+        },
+        {
+            "id": "crowd",
+            "name": "Crowd",
+            "fileName": "crow.mp3",
+            "fileType": "mp3",
+            "type": "standard",
+            "imagePath": ""
+        },
+        {
+            "id": "construction_2",
+            "name": "Construction",
+            "fileName": "construction 2.mp3",
+            "fileType": "mp3",
+            "type": "standard",
+            "imagePath": ""
+        },
+        {
+            "id": "leaves_2",
+            "name": "Leaves 2",
+            "fileName": "leaves 2.mp3",
+            "fileType": "mp3",
+            "type": "standard",
+            "imagePath": ""
+        },
+        {
+            "id": "piano",
+            "name": "Piano Music",
+            "fileName": "piano.mp3",
+            "fileType": "mp3",
+            "type": "standard",
+            "imagePath": ""
+        },
+        {
+            "id": "traffic_2",
+            "name": "Traffic 2",
+            "fileName": "traffic 2.mp3",
+            "fileType": "mp3",
+            "type": "standard",
+            "imagePath": ""
+        },
+        {
+            "id": "water_perfect",
+            "name": "Perfect Water",
+            "fileName": "water perefect.mp3",
+            "fileType": "mp3",
+            "type": "standard",
+            "imagePath": "water.jpg"
+        },
+        {
+            "id": "wind_again",
+            "name": "Wind 2",
+            "fileName": "wind again.mp3",
+            "fileType": "mp3",
+            "type": "standard",
+            "imagePath": "wind.jpg"
         }
     ]
 }
