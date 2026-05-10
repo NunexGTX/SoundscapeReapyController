@@ -70,6 +70,11 @@ package TrackDiscJockey{
 SoundscapeVReapy *-- TracksSoundscapeDJManager
 
 package jsonUtils{
+    abstract class jsonDealer{
+        #get_reapy_controller_dir()
+        {abstract}#ReadJson()
+    }
+
     class SoundscapeReapyControllerConfig{
         -config_json_location: str
         -soundscpae_reapy_controller_dir_flag: str
@@ -81,26 +86,36 @@ package jsonUtils{
         +EncoderAmbisonicTrackName: str
         +EncoderMonoAudioTrackName: str
         +SoundscapeReapyControllerConfig()
-        -ReadConfig()
+        #ReadJson()
+        -reapy_template_project_path()
+        -sounds_location()
+        -soundscape_vr_unity_communication_port()
+        -encoder_ambisonic_track_name()
+        -encoder_mono_audio_track_name()
+        -resolve_config_dir()
     }
 
     TracksSoundscapeDJManager o-- SoundscapeReapyControllerConfig
+    SoundscapeReapyControllerConfig <|-- jsonDealer
 
     class AudiosData{
-        -audios_json_location: str
+        -audios_json_file_name: str
+        -ambisonic_type_name: str
         +AudiosInfo: list
         +AudiosData()
-        +getAudioFileInfo(id: str): AudioInfo
+        #ReadJson()
+        +GetAudioFileInfo(id: str): AudioData
     }
+    AudiosData <|-- jsonDealer
 
-    dataclass AudioInfo{
+    dataclass AudioData{
         +sound_id: str
         +sound_name: str
         +ambisonic: bool
         +fileName: str
     }
 
-    AudiosData ..> AudioInfo
+    AudiosData ..> AudioData
     TracksSoundscapeDJManager *-- AudiosData
 }
 
