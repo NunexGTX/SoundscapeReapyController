@@ -1,8 +1,8 @@
-import os
 import json
 from pathlib import Path
+from jsonDealer import jsonDealer
 
-class SoundscapeReapyControllerConfig:
+class SoundscapeReapyControllerConfig(jsonDealer):
     __config_json_location = "../configs/config.json"
     __soundscape_reapy_controller_dir_flag = "{REAPY_CONTROLLER_DIR}"
 
@@ -13,9 +13,9 @@ class SoundscapeReapyControllerConfig:
                         'EncoderMonoAudioTrackName': 'EncoderMonoAudio'}
 
     def __init__(self):
-        self.__ReadConfig()
+        self._ReadJson()
 
-    def __ReadConfig(self):
+    def _ReadJson(self):
         config_json = self._resolve_config_dir()
 
         try:
@@ -45,17 +45,17 @@ class SoundscapeReapyControllerConfig:
         """Returns the path to the Reapy template project."""
         path = self.__config["ReapyTemplateProjectPath"]
         if self.__soundscape_reapy_controller_dir_flag in path:
-            return path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir())
+            return path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir()) #No need to wrap this in path, using the flag already gives the valid path for the OS
         else:
-            return path
+            return str(Path(path))
 
     def __sounds_location(self):
         """Returns the location of the sounds."""
         path = self.__config["SoundsLocation"]
         if self.__soundscape_reapy_controller_dir_flag in path:
-            return path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir())
+            return path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir()) #No need to wrap this in path, using the flag already gives the valid path for the OS
         else:
-            return path
+            return str(Path(path))
 
     def __soundscape_vr_unity_communication_port(self):
         """Returns the communication port for SoundscapeVR Unity."""
@@ -69,13 +69,10 @@ class SoundscapeReapyControllerConfig:
         """Returns the name of the encoder mono audio track."""
         return self.__config["EncoderMonoAudioTrackName"]
     
-    def _get_reapy_controller_dir(self):
-        '''Gets the reapy controller project dir. Should be the root of this project, which is on the previous directory relative to this classe's python file'''
-        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    
     def _resolve_config_dir(self):
         return (Path(__file__).parent / self.__config_json_location).resolve()
     
 #For Debug
 if __name__ == '__main__':
     srcc = SoundscapeReapyControllerConfig()
+    print(srcc.SoundsLocation)
