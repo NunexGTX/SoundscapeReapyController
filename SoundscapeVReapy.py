@@ -3,73 +3,65 @@ import asyncio
 import sys
 from SoundscapeVRCommunications.SoundscapeVRCommunicationsService import SoundscapeVRCommunicationsService
 from jsonUtils.SoundscapeReapyControllerConfig import SoundscapeReapyControllerConfig
+from TrackDiscJockey.TrackSoundscapeDJManager import TrackSoundscapeDJManager
 
-#Reaper project
 project = None
 config = None
 communicator = None
+ReapyManager = None
 
 def ReapyInit():
+    global project, config
     print("SoundscapeVReapy Initializing...")
-
     print("Checking if reaper is working")
     check_reaper_running()
 
-    #Read config file
     print("Reading config.json")
     config = SoundscapeReapyControllerConfig()
 
-    #Open the template project on reapy
     print(f"Opening {config.ReapyTemplateProjectPath} in Reaper DAW")
     reapy.open_project(config.ReapyTemplateProjectPath)
 
-    #Get that project
     print("Retrieving Reapy's DAW Project")
     project = reapy.Project()
-    
-    print("SoundscapeVReapy Ready!")
-    print()
+    print("SoundscapeVReapy Ready!\n")
 
 def check_reaper_running():
-    distant_api_enabled = reapy.dist_api_is_enabled()
-    if not distant_api_enabled:
-        #Reapy is not running or the api was not configured properly
-        print()
-        print("-> Reapy is either not opened or inaccessible")
-        print("Make Sure Reapy is opened and that you ran reapy's initial configuration step with you current python environment")
-        print("To do that, reset you reaper's configuration and run the command below with your python venv: ")
-        print(f'     python -c "import reapy; reapy.configure_reaper()"')
-        print()
-        sys.exit(1) #Exited because reaper was unvailable
+    if not reapy.dist_api_is_enabled():
+        print("\n-> Reapy is either not opened or inaccessible")
+        print("Make Sure Reapy is opened and that you ran reapy's initial configuration step")
+        print('     python -c "import reapy; reapy.configure_reaper()"')
+        sys.exit(1)
     print("Reaper DAW Connection: OK")
 
-
 def Reset():
-    '''Resets reaper project and its tracks'''
-    pass
+    global project, ReapyManager
+    reapy.open_project(config.ReapyTemplateProjectPath)
+    project = reapy.Project()
+    ReapyManager = TrackSoundscapeDJManager(project, config)
 
 def Exit(communicator: SoundscapeVRCommunicationsService):
-    print()
-    print("Exitting...")
+    print("\nExitting...")
     communicator.disconnect()
     print("Goodbye...")
-    #sys.exit(0) #Stop execution
-    #----END----
 
 async def main():
-    config = SoundscapeReapyControllerConfig()
+    global communicator, ReapyManager
     communicator = SoundscapeVRCommunicationsService(config)
+    ReapyManager = TrackSoundscapeDJManager(project, config)
 
     try:
-        await communicator.start() # blocks until Unity connects
+        await communicator.start()
         while True:
             request = await communicator.receiveRequest()
-            await communicator.sendResponse("OK")
+            if "RESET" in request:
+                Reset()
+                response = "Reaper Project has been reset"
+            else:
+                response = ReapyManager.CommandReceive(request)
+            await communicator.sendResponse(response)
     except asyncio.CancelledError:
         Exit(communicator)
-    finally:
-        pass
-            
 
 if __name__ == '__main__':
     ReapyInit()

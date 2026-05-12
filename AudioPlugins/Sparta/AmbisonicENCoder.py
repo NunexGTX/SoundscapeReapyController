@@ -27,7 +27,7 @@ class AmbisonicENCoder(AudioPluginController):
 
     __elevation_range = (-90,90)
 
-    def __init__(self,TrackFX,Sources: int,params = _param_defaults):
+    def __init__(self,TrackFX: reapy.FX,Sources: int,params = _param_defaults):
         super().__init__(TrackFX)
         self.Sources = Sources #The number of speakers being used by the ambisonic plugin
         try:
@@ -52,7 +52,7 @@ class AmbisonicENCoder(AudioPluginController):
     def __setNormType(self,normType_val):
         self.TrackFX.params[2] = self.__NormTypeVals[normType_val]
 
-    def __setNumSources(self,numSources_val):
+    def setNumSources(self,numSources_val):
         self.TrackFX.params[3] = self._param_val_calc(numSources_val,self.__source_range[0],self.__source_range[1])
     
     '''Setting speaker array positions'''

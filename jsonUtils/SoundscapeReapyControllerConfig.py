@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from jsonDealer import jsonDealer
+from .jsonDealer import jsonDealer
 
 class SoundscapeReapyControllerConfig(jsonDealer):
     __config_json_location = "../configs/config.json"
@@ -45,7 +45,7 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         """Returns the path to the Reapy template project."""
         path = self.__config["ReapyTemplateProjectPath"]
         if self.__soundscape_reapy_controller_dir_flag in path:
-            return path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir()) #No need to wrap this in path, using the flag already gives the valid path for the OS
+            return str(Path(path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir()))) #No need to wrap this in path, using the flag already gives the valid path for the OS
         else:
             return str(Path(path))
 
@@ -53,7 +53,7 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         """Returns the location of the sounds."""
         path = self.__config["SoundsLocation"]
         if self.__soundscape_reapy_controller_dir_flag in path:
-            return path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir()) #No need to wrap this in path, using the flag already gives the valid path for the OS
+            return str(Path(path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir()))) #No need to wrap this in path, using the flag already gives the valid path for the OS
         else:
             return str(Path(path))
 

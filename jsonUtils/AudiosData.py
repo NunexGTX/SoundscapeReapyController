@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
-from AudioData import AudioData
-from SoundscapeReapyControllerConfig import SoundscapeReapyControllerConfig
-from jsonDealer import jsonDealer
+from .AudioData import AudioData
+from .SoundscapeReapyControllerConfig import SoundscapeReapyControllerConfig
+from .jsonDealer import jsonDealer
 
 class AudiosData(jsonDealer):
     __audios_json_file_name = "audios.json"
@@ -32,7 +32,7 @@ class AudiosData(jsonDealer):
         except json.JSONDecodeError:
             print(f"Error: Invalid JSON format in {self.__audios_json}. Using default values.")
 
-    def GetAudiFileInfo(self,id: str) -> AudioData:
+    def GetAudioFileInfo(self,id: str) -> AudioData:
         AudioInfo = next((audio for audio in self.AudiosInfo if audio.sound_id == id), None)
         if AudioInfo is None:
             raise ValueError(f"Audio with id:{id} was not recognized")

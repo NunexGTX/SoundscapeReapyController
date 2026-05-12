@@ -19,6 +19,7 @@ package TrackDiscJockey{
         -audiosData: AudiosData
         -reapyControllerConfig: SoundscapeReapyControllerConfig
         -SoundTracks: list
+        -ReaperTimeSelection: TimeSelection
         -EncoderAmbisonic: Track
         -EncoderMonoAudio: Track
         -AmbiENC: AmbisonicENCoder
@@ -29,42 +30,48 @@ package TrackDiscJockey{
         -AvailableSoundEffects: list
         +Playing: bool
         +TrackSoundscapeDJManager(project: Project, reapyControllerConfig: SoundscapeReapyControllerConfig)
-        +CommandReceive(command: str)
-        -NewTrack(AudioID: str, SoundUUID: UUID, position: tuple, distanceRadius: float)
-        -SetTrackRedirect(track: Track, ambisonic: bool)
-        -SetMonoTrackEncoderRedirect(track: Track)
-        -SetAmbisonicTrackEncoderRedirect(track: Track)
+        +CommandReceive(command: str): str
+        -NewTrack(AudioID: str, SoundUUID: UUID, loop: bool)
         -NewAudioDurations()
+        -SetTrackRedirect(track: Track, ambisonic: bool)
+        -SetNormalTrackEncoderRedirect(track: Track)
+        -SetAmbisonicTrackEncoderRedirect(track: Track)
         -ProjectNoTrackPause()
-        -AdjustPlayAreaTime()
-        -UpdateAudioPosition(SoundUUID: UUID, position: tuple)
-        -UpdateAudioDistanceRadius(SoundUUID: UUID, distanceRadius: float)
+        -ExtendAllTrackItems()
+        -UpdateAudioPosition(SoundUUID: UUID, position_angles: tuple, distanceRadius: float)
         -CalculateDistanceDB(distanceRadius: float): float
+        -db_to_linear(db: float): float
         -AddSoundEffect(effect_type:str, SoundUUID: UUID): int
         -UpdateSoundEffect(SoundUUID: UUID, EffectIndex: int, params: list)
         -RemoveSoundEffect(SoundUUID: UUID, EffectIndex: int)
         -MuteTrack(SoundUUID: UUID)
         -DeleteTrack(SoundUUID: UUID)
-        -FindTrackByUUID(SoundUUID: UUID)
+        -RellocateMonoSources()
+        -FindSendToTrack(source_track: reapy.Track, dest_track: reapy.Track)
+        -DeleteLoopTrack(SoundUUID: UUID)
+        -FindTrackByUUID(SoundUUID: UUID): SoundTrack
     }
 
-    dataclass SoundTrack{
+    class SoundTrack{
+        +audioData: AudioData
         +SoundUUID: UUID
         +AudioID: str
+        +Track: Track
         +TrackName: str
-        +track: Track
         +TrackIndex: int
         +ambisonic: bool
-        +position: tuple
+        +ambiSourceIndex: int
+        +positionalRot: tuple
         +distanceRadius: float
         +currentVolumeDB: float
         +SoundEffects: list
         +mute: bool
         +audio_duration_seconds: float
+        +SoundTrack(audioData: AudioData, soundUUID: UUID, track: Track)
     }
 
     TracksSoundscapeDJManager *-- SoundTrack
-
+    SoundTrack o-- SoundscapeReapyControllerConfig
 }
 
 SoundscapeVReapy *-- TracksSoundscapeDJManager
@@ -107,6 +114,7 @@ package jsonUtils{
         +GetAudioFileInfo(id: str): AudioData
     }
     AudiosData <|-- jsonDealer
+    SoundTrack *-- AudioData
 
     dataclass AudioData{
         +sound_id: str
