@@ -1,6 +1,6 @@
 from reapy import Track
 import mutagen #To get audio file time
-from ..jsonUtils.AudioData import AudioData
+from jsonUtils.AudioData import AudioData
 from uuid import UUID
 
 class SoundTrack:

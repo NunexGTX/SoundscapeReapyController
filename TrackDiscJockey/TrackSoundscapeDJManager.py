@@ -3,11 +3,13 @@ import math
 from reapy import reascript_api as RPR
 import json
 import asyncio
-from ..AudioPlugins.Sparta.AmbisonicENCoder import AmbisonicENCoder
+from AudioPlugins.Sparta.AmbisonicENCoder import AmbisonicENCoder
 from uuid import UUID
-from SoundTrack import SoundTrack
+from pathlib import Path
+from TrackDiscJockey.SoundTrack import SoundTrack
 from jsonUtils.SoundscapeReapyControllerConfig import SoundscapeReapyControllerConfig
 from jsonUtils.AudiosData import AudiosData
+from jsonUtils.AudioData import AudioData
 
 class TrackSoundscapeDJManager:
     def __init__(self,project: reapy.Project, reapy_controller_config: SoundscapeReapyControllerConfig):
@@ -21,7 +23,7 @@ class TrackSoundscapeDJManager:
 
         self.__EncoderMono = project._get_track_by_name(reapy_controller_config.EncoderMonoAudioTrackName)
         self.__MonoAudiosCounter = 0
-        self.__AmbiENC = AmbisonicENCoder(self.__EncoderMono.fxs[AmbisonicENCoder.plugin_name])
+        self.__AmbiENC = AmbisonicENCoder(self.__EncoderMono.fxs[AmbisonicENCoder.plugin_name],1)
 
         self.EncoderAmbisonic = project._get_track_by_name(reapy_controller_config.EncoderAmbisonicTrackName)
 
@@ -57,7 +59,8 @@ class TrackSoundscapeDJManager:
         self.__project.pause()
         #Create a new track with soundtrack class instance and add it to the list
         audioTrackInfo = self.__audiosData.GetAudioFileInfo(audioID) #Prepare the audio's info
-        RPR.InsertMedia(self.__sounds_folder_path+"/"+audioTrackInfo.fileName,1) #creates a track which its name is the same as the sound file name #Make the track with the audio file
+        print(self.__get_audio_path)
+        RPR.InsertMedia(self.__get_audio_path,1) #creates a track which its name is the same as the sound file name #Make the track with the audio file
         #Get current first track (it should be the new one)
         newTrack = self.__project.tracks[0]
 
@@ -73,6 +76,9 @@ class TrackSoundscapeDJManager:
             self.__DeleteLoopTrack(soundUUID,soundTrack.audio_duration_seconds)
 
         self.__project.play()
+
+    def __get_audio_path(self,audioTrackInfo: AudioData):
+        return str(Path(self.__sounds_folder_path+"/"+audioTrackInfo.fileName))
 
     def __Set_Track_Channels(self,track: reapy.Track, ambisonic:bool):
         if not ambisonic:

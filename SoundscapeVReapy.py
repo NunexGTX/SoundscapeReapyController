@@ -50,18 +50,36 @@ async def main():
     communicator = SoundscapeVRCommunicationsService(config)
     ReapyManager = TrackSoundscapeDJManager(project, config)
 
-    try:
-        await communicator.start()
-        while True:
+    await communicator.start() # Binds the server
+
+    while True:
+        try:
+            # If we aren't connected (first time or after a disconnect), wait.
+            if not communicator.is_connected:
+                await communicator.wait_for_connection()
+
             request = await communicator.receiveRequest()
+            
             if "RESET" in request:
                 Reset()
                 response = "Reaper Project has been reset"
             else:
                 response = ReapyManager.CommandReceive(request)
+                
             await communicator.sendResponse(response)
-    except asyncio.CancelledError:
-        Exit(communicator)
+
+        except (ConnectionResetError, OSError):
+            # This catches the disconnect. 
+            # The service handles cleanup internally, so we just loop back 
+            # and wait for a new connection.
+            print("Unity client disconnected. Waiting for a new session...")
+            continue 
+        except asyncio.CancelledError:
+            Exit(communicator)
+            break
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            break
 
 if __name__ == '__main__':
     ReapyInit()

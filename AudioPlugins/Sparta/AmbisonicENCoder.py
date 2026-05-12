@@ -41,7 +41,7 @@ class AmbisonicENCoder(AudioPluginController):
         self.__setOutputOrder(params[0])
         self.__setChannelOrder(params[1])
         self.__setNormType(params[2])
-        self.__setNumSources(self.Sources)
+        self.setNumSources(self.Sources)
 
     def __setOutputOrder(self,ouputOrder_val):
         self.TrackFX.params[0] = self._param_val_calc(ouputOrder_val,self.__outputOrder_range[0],self.__outputOrder_range[1])

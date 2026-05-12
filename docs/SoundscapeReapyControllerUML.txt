@@ -32,6 +32,7 @@ package TrackDiscJockey{
         +TrackSoundscapeDJManager(project: Project, reapyControllerConfig: SoundscapeReapyControllerConfig)
         +CommandReceive(command: str): str
         -NewTrack(AudioID: str, SoundUUID: UUID, loop: bool)
+        -get_audio_path()
         -NewAudioDurations()
         -SetTrackRedirect(track: Track, ambisonic: bool)
         -SetNormalTrackEncoderRedirect(track: Track)

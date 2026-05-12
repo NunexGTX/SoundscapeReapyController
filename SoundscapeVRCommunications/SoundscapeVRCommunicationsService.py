@@ -16,10 +16,13 @@ class SoundscapeVRCommunicationsService:
         self.__client_socket: socket.socket | None = None
         self.__is_connected = False
 
+    @property
+    def is_connected(self):
+        return self.__is_connected
+
     async def start(self):
         """Entry point — binds the server and waits for the first client."""
         self.__bind_server()
-        await self.__wait_for_connection()
 
     '''ReceiveRequest gets what unity is asking so we can do it on reaper'''
     async def receiveRequest(self) -> str:
@@ -91,7 +94,7 @@ class SoundscapeVRCommunicationsService:
         self.__server_socket.listen(1) # only one Unity client at a time
         self.__logger.info(f"Server bound on {self.__host}:{self.__communication_port}, awaiting connection…")
 
-    async def __wait_for_connection(self):
+    async def wait_for_connection(self):
         """
         Non-blocking accept loop — yields control to the event loop until
         a Unity client connects, then marks the service as connected.
@@ -135,7 +138,6 @@ class SoundscapeVRCommunicationsService:
         """
         self.__logger.info("Connection lost — resetting and waiting for a new client…")
         self.__close_client()
-        await self.__wait_for_connection() # blocks until Unity reconnects
 
     def __close_client(self):
         """Shuts down and disposes the client socket, resets the connected flag."""
