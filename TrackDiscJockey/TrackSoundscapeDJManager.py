@@ -44,13 +44,14 @@ class TrackSoundscapeDJManager:
             try:
                 self.__NewTrack(message["AudioID"],UUID(message["SoundUUID"]),bool(message["Loop"]))
             except FileNotFoundError:
-                self.__logger.error(f"ERROR: The audio track with id {message["AudioID"]} has no valid audio file in the sounds folder.")
+                audioID = message["AudioID"]
+                self.__logger.error(f"ERROR: The audio track with id {audioID} has no valid audio file in the sounds folder.")
                 return "Track was not created successfully in Reaper. Reason: The audio file is not available in SoundscapeVReapy Controller"
             return "Track Created in Reaper"
         
         elif command == "source_position":
             uuid = UUID(message["SoundUUID"])
-            position_angles = tuple(message["position"])  # (azim, elevation)
+            position_angles = (message["azim"],message["elev"])  # (azim, elevation)
             distance = float(message["distance"])
             self.__UpdateAudioPosition(uuid, position_angles, distance)
             return "Source Position Updated"
@@ -75,7 +76,8 @@ class TrackSoundscapeDJManager:
 
         RPR.InsertMedia(audioPath,1) #creates a track which its name is the same as the sound file name #Make the track with the audio file
         #Get current first track (it should be the new one)
-        newTrack = self.__project.tracks[0]
+        trackName = str(Path(audioTrackInfo.fileName).stem)
+        newTrack = self.__project.tracks[trackName]
 
         self.__Set_Track_Channels(newTrack,audioTrackInfo.ambisonic)
         ambi_source_index = self.__SetTrackRedirect(newTrack,audioTrackInfo.ambisonic)
@@ -95,7 +97,7 @@ class TrackSoundscapeDJManager:
         if not audioPath.exists():
             raise FileNotFoundError(f"The path '{audioPath}' is not a valid file.")
         else:
-            return audioPath
+            return str(audioPath)
 
     def __Set_Track_Channels(self,track: reapy.Track, ambisonic:bool):
         if not ambisonic:
@@ -146,24 +148,32 @@ class TrackSoundscapeDJManager:
         self.__AmbiENC.setNumSources(self.__MonoAudiosCounter)
 
         send = source_track.add_send(self.__EncoderMono)
+        send.volume = 0.0  # Start silent to avoid click, fade in manually later
 
         # I_SRCCHAN | 1024 = mono flag, index 0 = first channel of source track
         RPR.SetTrackSendInfo_Value(source_track.id, 0, send.index, "I_SRCCHAN", 0 | 1024)
 
-        # Destination increments by 2 each time (0=ch1/2, 2=ch3/4, 4=ch5/6, ...)
-        dst_chan = (self.__MonoAudiosCounter - 1) * 2
+        # Destination increments by 1 each time (0=ch1/2, 2=ch2/3, 3=ch3/4, ...)
+        dst_chan = self.__MonoAudiosCounter-1
         RPR.SetTrackSendInfo_Value(source_track.id, 0, send.index, "I_DSTCHAN", dst_chan)
 
         self.__AmbiENC.SpeakerPositions(self.__MonoAudiosCounter, (0.0, 0.0)) #Set default value in the beginning
 
         return self.__MonoAudiosCounter
 
-    def __SetAmbisonicTrackEncoderRedirect(self,source_track: reapy.Track):
+    def __SetAmbisonicTrackEncoderRedirect(self,source_track: reapy.Track, num_channels = 4):
         send = source_track.add_send(self.EncoderAmbisonic)
 
-        # Send all channels from src ch 0 → dst ch 0 (1/2/3/4 all flow through)
-        RPR.SetTrackSendInfo_Value(source_track.id, 0, send.index, "I_SRCCHAN", 0)
-        RPR.SetTrackSendInfo_Value(source_track.id, 0, send.index, "I_DSTCHAN", 0)
+        # Encode: start_ch (0) | (num_channels - 1) << 10
+        ch_value = 0 | ((num_channels - 1) << 10)  # = 3072 for 4ch
+        
+        # Get the raw REAPER track pointer and send index
+        send_idx = send.index
+        track_ptr = source_track.id
+        
+        RPR = reapy.reascript_api
+        RPR.SetTrackSendInfo_Value(track_ptr, 0, send_idx, "I_SRCCHAN", ch_value)
+        RPR.SetTrackSendInfo_Value(track_ptr, 0, send_idx, "I_DSTCHAN", ch_value)
 
         return None
     
@@ -171,11 +181,10 @@ class TrackSoundscapeDJManager:
         soundTrack = self.__FindTrackByUUID(soundUUID)
         if soundTrack is None:
             raise ValueError(f"SoundTrack with UUID {soundUUID} not found")
-        if soundTrack.ambisonic:
-            raise ValueError(f"SoundTrack {soundUUID} is ambisonic, position control not applicable")
-
-        # Update Sparta plugin source position
-        self.__AmbiENC.SpeakerPositions(soundTrack.ambiSourceIndex, position_angles)
+        
+        if not soundTrack.ambisonic:
+            # Update Sparta plugin source position
+            self.__AmbiENC.SpeakerPositions(soundTrack.ambiSourceIndex, position_angles)
 
         # Calculate and apply distance attenuation
         volume_db = self.__CalculateDistanceDB(distanceRadius)
