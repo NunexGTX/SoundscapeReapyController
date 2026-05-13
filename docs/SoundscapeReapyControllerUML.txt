@@ -16,6 +16,7 @@ metaclass SoundscapeVReapy{
 package TrackDiscJockey{
     class TracksSoundscapeDJManager{
         -project: Project
+        -logger: Logger
         -audiosData: AudiosData
         -reapyControllerConfig: SoundscapeReapyControllerConfig
         -SoundTracks: list

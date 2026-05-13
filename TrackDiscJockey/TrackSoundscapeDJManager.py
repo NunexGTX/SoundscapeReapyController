@@ -3,6 +3,7 @@ import math
 from reapy import reascript_api as RPR
 import json
 import asyncio
+import logging
 from AudioPlugins.Sparta.AmbisonicENCoder import AmbisonicENCoder
 from uuid import UUID
 from pathlib import Path
@@ -11,9 +12,13 @@ from jsonUtils.SoundscapeReapyControllerConfig import SoundscapeReapyControllerC
 from jsonUtils.AudiosData import AudiosData
 from jsonUtils.AudioData import AudioData
 
+logging.basicConfig(level=logging.INFO)
+
 class TrackSoundscapeDJManager:
     def __init__(self,project: reapy.Project, reapy_controller_config: SoundscapeReapyControllerConfig):
         self.__project = project
+        self.__logger = logging.getLogger(self.__class__.__name__)
+        
         self.__SoundTracks = []
         self.__CurrentMaxAudioDuration = 0.0
         self.__ReaperTimeSelection = reapy.TimeSelection(project) #To do the looping and set the timeline duration
@@ -36,7 +41,11 @@ class TrackSoundscapeDJManager:
         command = message["command"]
 
         if command == "new_track":
-            self.__NewTrack(message["AudioID"],UUID(message["SoundUUID"]),bool(message["Loop"]))
+            try:
+                self.__NewTrack(message["AudioID"],UUID(message["SoundUUID"]),bool(message["Loop"]))
+            except FileNotFoundError:
+                self.__logger.error(f"ERROR: The audio track with id {message["AudioID"]} has no valid audio file in the sounds folder.")
+                return "Track was not created successfully in Reaper. Reason: The audio file is not available in SoundscapeVReapy Controller"
             return "Track Created in Reaper"
         
         elif command == "source_position":
@@ -58,9 +67,13 @@ class TrackSoundscapeDJManager:
         self.__project.cursor_position = 0
         self.__project.pause()
         #Create a new track with soundtrack class instance and add it to the list
-        audioTrackInfo = self.__audiosData.GetAudioFileInfo(audioID) #Prepare the audio's info
-        print(self.__get_audio_path)
-        RPR.InsertMedia(self.__get_audio_path,1) #creates a track which its name is the same as the sound file name #Make the track with the audio file
+        audioTrackInfo = self.__audiosData.GetAudioFileInfo(audioID) #Prepare the audio's info and check if audio is available
+        try:
+            audioPath = self.__get_audio_path(audioTrackInfo)
+        except FileNotFoundError:
+            raise
+
+        RPR.InsertMedia(audioPath,1) #creates a track which its name is the same as the sound file name #Make the track with the audio file
         #Get current first track (it should be the new one)
         newTrack = self.__project.tracks[0]
 
@@ -78,7 +91,11 @@ class TrackSoundscapeDJManager:
         self.__project.play()
 
     def __get_audio_path(self,audioTrackInfo: AudioData):
-        return str(Path(self.__sounds_folder_path+"/"+audioTrackInfo.fileName))
+        audioPath = Path(self.__sounds_folder_path+"/"+audioTrackInfo.fileName)
+        if not audioPath.exists():
+            raise FileNotFoundError(f"The path '{audioPath}' is not a valid file.")
+        else:
+            return audioPath
 
     def __Set_Track_Channels(self,track: reapy.Track, ambisonic:bool):
         if not ambisonic:
