@@ -208,3 +208,6 @@ __marimo__/
 
 #VSCode configuration folder made during the venv setup
 .vscode/
+
+#Ignore audio files
+Sounds/*.{mp3,wav,flac,m4a}
