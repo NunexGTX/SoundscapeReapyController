@@ -5,7 +5,7 @@ from uuid import UUID
 
 class SoundTrack:
     
-    def __init__(self, audioData: AudioData, soundUUID: UUID, track: Track):
+    def __init__(self, audioData: AudioData, soundUUID: UUID, track: Track, delay: int, loop: bool):
         self.AudioData = audioData
         self.SoundUUID = soundUUID
         self.AudioID = audioData.sound_id
@@ -18,4 +18,6 @@ class SoundTrack:
         self.distanceRadius = 1.0          # 1m = 0dB reference
         self.currentVolumeDB = 0.0
         self.ambiSourceIndex = None
+        self.delay = delay
+        self.loop = loop
 

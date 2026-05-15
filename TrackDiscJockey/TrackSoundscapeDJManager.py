@@ -42,7 +42,7 @@ class TrackSoundscapeDJManager:
 
         if command == "new_track":
             try:
-                self.__NewTrack(message["AudioID"],UUID(message["SoundUUID"]),bool(message["Loop"]))
+                self.__NewTrack(message["AudioID"],UUID(message["SoundUUID"]),bool(message["Loop"]),int(message["Delay"]))
             except FileNotFoundError:
                 audioID = message["AudioID"]
                 self.__logger.error(f"ERROR: The audio track with id {audioID} has no valid audio file in the sounds folder.")
@@ -56,16 +56,16 @@ class TrackSoundscapeDJManager:
             self.__UpdateAudioPosition(uuid, position_angles, distance)
             return "Source Position Updated"
         
-        elif command == "delete_track":
-            uuid = UUID(message["SoundUUID"])
-            self.__DeleteTrack(uuid)
-            return "Track Deleted"
+        #elif command == "delete_track":
+         #   uuid = UUID(message["SoundUUID"])
+          #  self.__DeleteTrack(uuid)
+           # return "Track Deleted"
 
         return "Invalid Command or Instructions"
 
-    def __NewTrack(self,audioID: str, soundUUID: UUID, loop: bool):
+    def __NewTrack(self,audioID: str, soundUUID: UUID, loop: bool, delay: int):
         #Cursor in 0 to insert the audio and paused
-        self.__project.cursor_position = 0
+        self.__project.cursor_position = 0+delay
         self.__project.pause()
         #Create a new track with soundtrack class instance and add it to the list
         audioTrackInfo = self.__audiosData.GetAudioFileInfo(audioID) #Prepare the audio's info and check if audio is available
@@ -79,10 +79,12 @@ class TrackSoundscapeDJManager:
         trackName = str(Path(audioTrackInfo.fileName).stem)
         newTrack = self.__project.tracks[trackName]
 
+        newTrack.mute() #Avoid pop
+
         self.__Set_Track_Channels(newTrack,audioTrackInfo.ambisonic)
         ambi_source_index = self.__SetTrackRedirect(newTrack,audioTrackInfo.ambisonic)
 
-        soundTrack = SoundTrack(audioTrackInfo,soundUUID, newTrack)
+        soundTrack = SoundTrack(audioTrackInfo,soundUUID, newTrack,delay, loop)
         soundTrack.ambiSourceIndex = ambi_source_index
         self.__SoundTracks.append(soundTrack)
         self.__NewAudioDurations()
@@ -112,7 +114,7 @@ class TrackSoundscapeDJManager:
 
         # Update max duration from the full list
         self.__CurrentMaxAudioDuration = max(
-            st.audio_duration_seconds for st in self.__SoundTracks
+            (st.delay + st.audio_duration_seconds) for st in self.__SoundTracks
         )
 
         # Extend all tracks to the largest clean multiple of their own duration
@@ -122,14 +124,15 @@ class TrackSoundscapeDJManager:
     
     def __ExtendAllTrackItems(self):
         for soundTrack in self.__SoundTracks:
-            native_duration = soundTrack.audio_duration_seconds
-            # How many full plays fit within the longest audio?
-            n_loops = math.floor(self.__CurrentMaxAudioDuration / native_duration)
-            extended_duration = n_loops * native_duration  # always <= max, always a clean loop end
+            if not soundTrack.loop:
+                native_duration = soundTrack.audio_duration_seconds
+                # How many full plays fit within the longest audio?
+                n_loops = math.floor(self.__CurrentMaxAudioDuration / native_duration)
+                extended_duration = n_loops * native_duration  # always <= max, always a clean loop end
 
-            item = soundTrack.Track.items[0]
-            RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
-            item.length = extended_duration
+                item = soundTrack.Track.items[0]
+                RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
+                item.length = extended_duration
 
     def __ProjectNoTrackPause(self):
         self.__project.pause()
@@ -148,7 +151,6 @@ class TrackSoundscapeDJManager:
         self.__AmbiENC.setNumSources(self.__MonoAudiosCounter)
 
         send = source_track.add_send(self.__EncoderMono)
-        send.volume = 0.0  # Start silent to avoid click, fade in manually later
 
         # I_SRCCHAN | 1024 = mono flag, index 0 = first channel of source track
         RPR.SetTrackSendInfo_Value(source_track.id, 0, send.index, "I_SRCCHAN", 0 | 1024)
@@ -195,6 +197,9 @@ class TrackSoundscapeDJManager:
         soundTrack.positionalRot = position_angles
         soundTrack.distanceRadius = distanceRadius
         soundTrack.currentVolumeDB = volume_db
+
+        #unmute track
+        soundTrack.Track.unmute()
 
     def __CalculateDistanceDB(self, distanceRadius: float) -> float:
         # Inverse square law: 0dB at 1m reference, -6dB per doubling of distance
