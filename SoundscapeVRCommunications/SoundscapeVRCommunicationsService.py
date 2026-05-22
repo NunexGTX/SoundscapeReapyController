@@ -114,7 +114,7 @@ class SoundscapeVRCommunicationsService:
 
     def __where_to_connect_message(self):
         print()
-        print(f"Connect to Sounscape Reapy Controller at: {self.__reapy_controller_ip}:{self.__communication_port}")
+        print(f"Connect to Soundscape Reapy Controller at: {self.__reapy_controller_ip}:{self.__communication_port}")
         print()
 
     def __get_this_server_addr(self):

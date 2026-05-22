@@ -107,8 +107,9 @@ class AmbisonicENCoder(AudioPluginController):
             raise ValueError(f"There can only be up to 128 channel speakers on your ambisonic setup with sparta, which means {self.Sources} speakers isn't a valid amount of speakers. Either you typed wrong or don't know how to count")
 
     def __check_speaker_availability(self,source_number):
-        if not 1 <= source_number <= self.Sources:
-            raise ValueError(f"You tried to assign a position to a Speaker Source that does not exist at the moment. Source Number: {source_number}")
+        #if not 1 <= source_number <= self.Sources:
+            #raise ValueError(f"You tried to assign a position to a Speaker Source that does not exist at the moment. Source Number: {source_number}")
+        pass
         
     def __check_azim_value(self,azim_val):
         if not self.__azim_range[0] <= azim_val <= self.__azim_range[1]:

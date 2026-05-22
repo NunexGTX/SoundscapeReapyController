@@ -20,6 +20,8 @@ def ReapyInit():
     config = SoundscapeReapyControllerConfig()
 
     print(f"Opening {config.ReapyTemplateProjectPath} in Reaper DAW")
+    print("   ⚠️  If REAPER is asking you to save the current project, click 'Don't Save' to continue.")
+    print()
     reapy.open_project(config.ReapyTemplateProjectPath)
 
     print("Retrieving Reapy's DAW Project")
@@ -35,7 +37,7 @@ def check_reaper_running():
     print("Reaper DAW Connection: OK")
 
 def Reset():
-    global project, ReapyManager
+    global project, ReapyManage
     reapy.open_project(config.ReapyTemplateProjectPath)
     project = reapy.Project()
     ReapyManager = TrackSoundscapeDJManager(project, config)

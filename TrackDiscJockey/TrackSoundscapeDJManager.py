@@ -42,7 +42,7 @@ class TrackSoundscapeDJManager:
 
         if command == "new_track":
             try:
-                self.__NewTrack(message["AudioID"],UUID(message["SoundUUID"]),bool(message["Loop"]),int(message["Delay"]))
+                self.__NewTrack(message["AudioID"],UUID(message["SoundUUID"]), float(message["Volume"]),bool(message["Loop"]),int(message["Delay"]))
             except FileNotFoundError:
                 audioID = message["AudioID"]
                 self.__logger.error(f"ERROR: The audio track with id {audioID} has no valid audio file in the sounds folder.")
@@ -56,16 +56,33 @@ class TrackSoundscapeDJManager:
             self.__UpdateAudioPosition(uuid, position_angles, distance)
             return "Source Position Updated"
         
-        #elif command == "delete_track":
-         #   uuid = UUID(message["SoundUUID"])
-          #  self.__DeleteTrack(uuid)
-           # return "Track Deleted"
+        elif command == "mute":
+            self.__muteTrack(UUID(message["SoundUUID"]))
+            return "Muted Track"
+        
+        elif command == "unmute":
+            self.__unmuteTrack(UUID(message["SoundUUID"]))
+            return "Unmuted Track"
+        
+        elif command == "delete_track":
+            uuid = UUID(message["SoundUUID"])
+            self.__DeleteTrack(uuid)
+            return "Track Deleted"
 
         return "Invalid Command or Instructions"
 
-    def __NewTrack(self,audioID: str, soundUUID: UUID, loop: bool, delay: int):
+    def __NewTrack(self,audioID: str, soundUUID: UUID, volume: float, loop: bool, delay: int, redo_track = True):
+        #Check if that specific sound with that UUID already exists. This will early return the function but try to make sure this command isn't received
+        if self.__FindTrackByUUID(soundUUID):
+            if redo_track:
+                #Delete track first
+                self.__DeleteTrack(soundUUID)
+            else:
+                self.__logger.warning("A command to create a new track that already exists has been ignored")
+                return
+
         #Cursor in 0 to insert the audio and paused
-        self.__project.cursor_position = 0+delay
+        self.__project.cursor_position = delay
         self.__project.pause()
         #Create a new track with soundtrack class instance and add it to the list
         audioTrackInfo = self.__audiosData.GetAudioFileInfo(audioID) #Prepare the audio's info and check if audio is available
@@ -86,12 +103,14 @@ class TrackSoundscapeDJManager:
 
         soundTrack = SoundTrack(audioTrackInfo,soundUUID, newTrack,delay, loop)
         soundTrack.ambiSourceIndex = ambi_source_index
+        soundTrack.VolumeGain = volume
         self.__SoundTracks.append(soundTrack)
         self.__NewAudioDurations()
 
         if not loop:
-            self.__DeleteLoopTrack(soundUUID,soundTrack.audio_duration_seconds)
+            asyncio.create_task(self.__DeleteLoopTrack(soundUUID, soundTrack.audio_duration_seconds+delay))
 
+        self.__project.cursor_position = 0 #Get cursor back to 0
         self.__project.play()
 
     def __get_audio_path(self,audioTrackInfo: AudioData):
@@ -124,7 +143,7 @@ class TrackSoundscapeDJManager:
     
     def __ExtendAllTrackItems(self):
         for soundTrack in self.__SoundTracks:
-            if not soundTrack.loop:
+            if soundTrack.loop:
                 native_duration = soundTrack.audio_duration_seconds
                 # How many full plays fit within the longest audio?
                 n_loops = math.floor(self.__CurrentMaxAudioDuration / native_duration)
@@ -191,7 +210,8 @@ class TrackSoundscapeDJManager:
         # Calculate and apply distance attenuation
         volume_db = self.__CalculateDistanceDB(distanceRadius)
         trackRPR = RPR.GetTrack(0,soundTrack.Track.index)
-        RPR.SetMediaTrackInfo_Value(trackRPR,"D_VOL",self.__db_to_linear(volume_db))
+        linearVolume = self.__db_to_linear(volume_db)*soundTrack.VolumeGain
+        RPR.SetMediaTrackInfo_Value(trackRPR,"D_VOL",linearVolume)
 
         # Save state on the SoundTrack
         soundTrack.positionalRot = position_angles
@@ -199,7 +219,7 @@ class TrackSoundscapeDJManager:
         soundTrack.currentVolumeDB = volume_db
 
         #unmute track
-        soundTrack.Track.unmute()
+        #soundTrack.Track.unmute()
 
     def __CalculateDistanceDB(self, distanceRadius: float) -> float:
         # Inverse square law: 0dB at 1m reference, -6dB per doubling of distance
@@ -211,7 +231,7 @@ class TrackSoundscapeDJManager:
     def __db_to_linear(self,volume_db: float) -> float:
         return 10 ** (volume_db / 20)
     
-    def __FindTrackByUUID(self,soundUUID: UUID):
+    def __FindTrackByUUID(self,soundUUID: UUID) -> SoundTrack:
         return next((st for st in self.__SoundTracks if st.SoundUUID == soundUUID), None)
     
     def __DeleteTrack(self, soundUUID: UUID):
@@ -268,3 +288,14 @@ class TrackSoundscapeDJManager:
     async def __DeleteLoopTrack(self, soundUUID: UUID, audio_time: float):
         await asyncio.sleep(audio_time)
         self.__DeleteTrack(soundUUID)
+
+    def __muteTrack(self, soundUUID: UUID):
+        soundTrack = self.__FindTrackByUUID(soundUUID)
+        if soundTrack:
+            soundTrack.Track.mute()
+
+    def __unmuteTrack(self, soundUUID: UUID):
+        soundTrack = self.__FindTrackByUUID(soundUUID)
+        if soundTrack:
+            soundTrack.Track.unmute()
+            

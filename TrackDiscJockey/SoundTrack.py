@@ -16,6 +16,7 @@ class SoundTrack:
         self.audio_duration_seconds = track.items[0].length #There should only be 1 audio file in each track
         self.positionalRot = (0.0, 0.0)   # azim, elevation — center by default
         self.distanceRadius = 1.0          # 1m = 0dB reference
+        self.VolumeGain = 0.0 #Volume factor
         self.currentVolumeDB = 0.0
         self.ambiSourceIndex = None
         self.delay = delay
