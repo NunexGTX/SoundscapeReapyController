@@ -47,6 +47,7 @@ package TrackDiscJockey{
         -UpdateSoundEffect(SoundUUID: UUID, EffectIndex: int, params: list)
         -RemoveSoundEffect(SoundUUID: UUID, EffectIndex: int)
         -MuteTrack(SoundUUID: UUID)
+        -UnmuteTrack(SoundUUID: UUID)
         -DeleteTrack(SoundUUID: UUID)
         -RellocateMonoSources()
         -FindSendToTrack(source_track: reapy.Track, dest_track: reapy.Track)

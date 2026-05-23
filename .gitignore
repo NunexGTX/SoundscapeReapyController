@@ -215,3 +215,6 @@ Sounds/*.{mp3,wav,flac,m4a}
 #Reaper Folders
 Backups/
 Media/
+
+#CLAUDE CODE
+CLAUDE.md
