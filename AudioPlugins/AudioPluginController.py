@@ -32,6 +32,10 @@ class AudioPluginController(ABC):
     def _param_val_calc(self,x,min_val,max_val):
         #This uses the formula : (x-xmin)/(xmax-xmin) to rescale the values from 0 to 1
         return (x-min_val)/(max_val-min_val)
+    
+    def _param_double_val_calc(self,x,min_val,max_val):
+        #Used for parameters that go from 0 to 2 (like db parameters less than 1 are negatives more than 1 are positives)
+        return self._param_val_calc(x,min_val,max_val)*2
 
     
 

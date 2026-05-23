@@ -28,7 +28,7 @@ package TrackDiscJockey{
         -CurrentMaxAudioDuration: float
         -MonoEncoderSources: int
         -PartialAudioStretchFactor: float
-        -AvailableSoundEffects: list
+        -AvailableSoundEffects: dict
         +Playing: bool
         +TrackSoundscapeDJManager(project: Project, reapyControllerConfig: SoundscapeReapyControllerConfig)
         +CommandReceive(command: str): str
@@ -43,9 +43,8 @@ package TrackDiscJockey{
         -UpdateAudioPosition(SoundUUID: UUID, position_angles: tuple, distanceRadius: float)
         -CalculateDistanceDB(distanceRadius: float): float
         -db_to_linear(db: float): float
-        -AddSoundEffect(effect_type:str, SoundUUID: UUID): int
-        -UpdateSoundEffect(SoundUUID: UUID, EffectIndex: int, params: list)
-        -RemoveSoundEffect(SoundUUID: UUID, EffectIndex: int)
+        -AddSoundEffect(SoundUUID: UUID, effect_name: str, effectParams: list): int
+        -RemoveSoundEffect(SoundUUID: UUID, effect_name: str)
         -MuteTrack(SoundUUID: UUID)
         -UnmuteTrack(SoundUUID: UUID)
         -DeleteTrack(SoundUUID: UUID)
@@ -68,9 +67,13 @@ package TrackDiscJockey{
         +distanceRadius: float
         +currentVolumeDB: float
         +SoundEffects: list
-        +mute: bool
+        +muteState: bool
         +audio_duration_seconds: float
         +SoundTrack(audioData: AudioData, soundUUID: UUID, track: Track)
+        +mute()
+        +unmute()
+        +newSoundEffect(reapy.FX)
+        +findSoundEffect(): SoundEffect
     }
 
     TracksSoundscapeDJManager *-- SoundTrack

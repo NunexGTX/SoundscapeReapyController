@@ -50,12 +50,16 @@ class Occlusion(SoundEffect):
 
     def updateSoundEffectParams(self, params: list):
         apply_occ, freq_dep, general, low, mid, high = params
+        if not isinstance(apply_occ, bool):
+            apply_occ = str(apply_occ).lower() == 'true'
+        if not isinstance(freq_dep, bool):
+            freq_dep = str(freq_dep).lower() == 'true'
         self.setApplyOcclusion(apply_occ)
         self.setFrequencyDependent(freq_dep)
-        self.setGeneralOcclusion(general)
-        self.setLowFreq(low)
-        self.setMidFreq(mid)
-        self.setHighFreq(high)
+        self.setGeneralOcclusion(float(general))
+        self.setLowFreq(float(low))
+        self.setMidFreq(float(mid))
+        self.setHighFreq(float(high))
 
     def _applyBands(self):
         db = (self._general_occlusion - 1.0) * 60

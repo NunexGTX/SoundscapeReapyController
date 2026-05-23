@@ -42,31 +42,33 @@ class Echo(SoundEffect):
 
     def updateSoundEffectParams(self, params: list):
         apply_echo, delay_ms, decay_ratio, dry_mix, wet_mix = params
+        if not isinstance(apply_echo, bool):
+            apply_echo = str(apply_echo).lower() == 'true'
         self.setApplyEcho(apply_echo)
-        self.setDelay(delay_ms)
-        self.setDecayRatio(decay_ratio)
-        self.setDryMix(dry_mix)
-        self.setWetMix(wet_mix)
+        self.setDelay(float(delay_ms))
+        self.setDecayRatio(float(decay_ratio))
+        self.setDryMix(float(dry_mix))
+        self.setWetMix(float(wet_mix))
 
     def setApplyEcho(self, enabled: bool):
         self.TrackFX.is_enabled = enabled
 
     def setDelay(self, delay_ms: float):
-        if not 0 <= delay_ms <= 2000:
-            raise ValueError(f"delay_ms must be 0–2000, got {delay_ms}")
-        self.TrackFX.params[3] = self._param_val_calc(delay_ms, 0, 2000)
+        if not 0 <= delay_ms <= 10000:
+            raise ValueError(f"delay_ms must be 0–10000, got {delay_ms}")
+        self.TrackFX.params[3] = self._param_val_calc(delay_ms, 0, 10000)
 
     def setDecayRatio(self, ratio: float):
         if not 0.0 <= ratio <= 1.0:
             raise ValueError(f"decay_ratio must be 0.0–1.0, got {ratio}")
-        self.TrackFX.params[5] = min(ratio, 0.95)
+        self.TrackFX.params[5] = self._param_val_calc(ratio,0,1) #more than 1 and audio starts to clip
 
     def setDryMix(self, value: float):
         if not 0.0 <= value <= 1.0:
             raise ValueError(f"dry_mix must be 0.0–1.0, got {value}")
-        self.TrackFX.params[1] = value
+        self.TrackFX.params[1] = self._param_double_val_calc(value,0,1)
 
     def setWetMix(self, value: float):
         if not 0.0 <= value <= 1.0:
             raise ValueError(f"wet_mix must be 0.0–1.0, got {value}")
-        self.TrackFX.params[0] = value
+        self.TrackFX.params[0] = self._param_double_val_calc(value,0,1)

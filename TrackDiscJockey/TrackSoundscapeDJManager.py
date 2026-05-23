@@ -11,6 +11,9 @@ from TrackDiscJockey.SoundTrack import SoundTrack
 from jsonUtils.SoundscapeReapyControllerConfig import SoundscapeReapyControllerConfig
 from jsonUtils.AudiosData import AudiosData
 from jsonUtils.AudioData import AudioData
+#Sound effect plugin classes
+from AudioPlugins.SoundEffects.Echo import Echo
+from AudioPlugins.SoundEffects.Occlusion import Occlusion
 
 logging.basicConfig(level=logging.INFO)
 
@@ -29,6 +32,11 @@ class TrackSoundscapeDJManager:
         self.__EncoderMono = project._get_track_by_name(reapy_controller_config.EncoderMonoAudioTrackName)
         self.__MonoAudiosCounter = 0
         self.__AmbiENC = AmbisonicENCoder(self.__EncoderMono.fxs[AmbisonicENCoder.plugin_name],1)
+
+        self.__availableSoundEffects = {
+            "echo": Echo,
+            "occlusion": Occlusion,
+        }
 
         self.EncoderAmbisonic = project._get_track_by_name(reapy_controller_config.EncoderAmbisonicTrackName)
 
@@ -63,6 +71,14 @@ class TrackSoundscapeDJManager:
         elif command == "unmute":
             self.__unmuteTrack(UUID(message["SoundUUID"]))
             return "Unmuted Track"
+        
+        elif command == "add_effect":
+            self.__addSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]),list(message["EffectParams"]))
+            return "Effect Added to Track"
+        
+        elif command == "remove_effect":
+            self.__removeSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]))
+            return "Effect Removed from Track"
         
         elif command == "delete_track":
             uuid = UUID(message["SoundUUID"])
@@ -292,10 +308,42 @@ class TrackSoundscapeDJManager:
     def __muteTrack(self, soundUUID: UUID):
         soundTrack = self.__FindTrackByUUID(soundUUID)
         if soundTrack:
-            soundTrack.Track.mute()
+            soundTrack.mute()
 
     def __unmuteTrack(self, soundUUID: UUID):
         soundTrack = self.__FindTrackByUUID(soundUUID)
         if soundTrack:
-            soundTrack.Track.unmute()
+            soundTrack.unmute()
+
+    def __addSoundEffect(self,SoundUUID: UUID, effect_name: str, effectParams: list):
+        soundTrack = self.__FindTrackByUUID(SoundUUID)
+        if soundTrack:
+            effectClass = self.__availableSoundEffects.get(effect_name)
+            if effectClass is None:
+                self.__logger.warning("A sound effect not yet implemented was attempted to be added to the track")
+                return
+            newEffect = effectClass.add_to_track(soundTrack.Track)
+            newEffect.updateSoundEffectParams(effectParams)
+
+            #Add to soundtrack
+            soundTrack.newSoundEffect(newEffect)
+
+    def __removeSoundEffect(self, SoundUUID: UUID, effect_name: str):
+        soundTrack = self.__FindTrackByUUID(SoundUUID)
+        if soundTrack:
+            effectType = self.__availableSoundEffects.get(effect_name)
+            if effectType is None:
+                self.__logger.warning("A sound effect not yet implemented was attempted to be deleted from the track")
+                return
+            
+            fxType = next((item for item in soundTrack.SoundEffects if isinstance(item, effectType)), None)
+            if fxType is None:
+                self.__logger.warning(f"Sound effect '{effect_name}' was not found in the track")
+                return
+            
+            #remove from soundtrack
+            soundTrack.deleteSoundEffect(fxType)
+
+    
+
             
