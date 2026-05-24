@@ -14,6 +14,7 @@ from jsonUtils.AudioData import AudioData
 #Sound effect plugin classes
 from AudioPlugins.SoundEffects.Echo import Echo
 from AudioPlugins.SoundEffects.Occlusion import Occlusion
+from AudioPlugins.SoundEffects.HighLowPassFilter import HighLowPassFilter
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,6 +37,7 @@ class TrackSoundscapeDJManager:
         self.__availableSoundEffects = {
             "echo": Echo,
             "occlusion": Occlusion,
+            "highLowPass": HighLowPassFilter #TODO: change accoring to unity's id
         }
 
         self.EncoderAmbisonic = project._get_track_by_name(reapy_controller_config.EncoderAmbisonicTrackName)
