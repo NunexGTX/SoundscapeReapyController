@@ -1,25 +1,32 @@
 import json
+import hashlib
 from pathlib import Path
 from .jsonDealer import jsonDealer
 
 class SoundscapeReapyControllerConfig(jsonDealer):
-    __config_json_location = "../configs/config.json"
+    _json_location = "../configs/config.json"
     __soundscape_reapy_controller_dir_flag = "{REAPY_CONTROLLER_DIR}"
 
-    __config_default = {'ReapyTemplateProjectPath': '{REAPY_CONTROLLER_DIR}/SoundscapeReaper.RPP', 
-                        'SoundsLocation': '{REAPY_CONTROLLER_DIR}/Sounds', 
-                        'SoundscapeVRUnityCommunicationPort': 6337, 
-                        'EncoderAmbisonicTrackName': 'EncoderAmbisonicAudio', 
-                        'EncoderMonoAudioTrackName': 'EncoderMonoAudio'}
+    __config_default = {
+            "ReapyTemplateProjectPath": "{REAPY_CONTROLLER_DIR}/SoundscapeReaper.RPP",
+            "SoundsLocation": "{REAPY_CONTROLLER_DIR}/Sounds",
+            "SoundscapeVRUnityCommunicationPort": 6337,
+            "EncoderAmbisonicTrackName": "EncoderAmbisonic1stOrderAudio",
+            "EncoderMonoAudioTrackName": "EncoderMonoAudio",
+            "DecoderAmbisonicTrackName": "DecoderAmbisonic",
+            "DecoderBinauralTrackName": "DecoderBinaural",
+            "AmbisonicOrder": 5,
+            "TrackChannels": 38
+        }
 
     def __init__(self):
+        super().__init__()
         self._ReadJson()
 
     def _ReadJson(self):
-        config_json = self._resolve_config_dir()
-
+        self.config_json = self._resolve_config_dir()
         try:
-            with open(config_json,'r') as f:
+            with open(self.config_json,'r') as f:
                 config_data = json.load(f)
 
             if "config" in config_data and isinstance(config_data["config"], list) and len(config_data["config"]) > 0:
@@ -29,10 +36,10 @@ class SoundscapeReapyControllerConfig(jsonDealer):
                 self.__config = self.__config_default # Initialize with an empty dictionary if no config is found
 
         except FileNotFoundError:
-            print(f"Error: Config file not found at {config_json}.  Using default values.")
+            print(f"Error: Config file not found at {self.config_json}.  Using default values.")
             self.__config = self.__config_default # Initialize with an empty dictionary if the file doesn't exist
         except json.JSONDecodeError:
-            print(f"Error: Invalid JSON format in {config_json}. Using default values.")
+            print(f"Error: Invalid JSON format in {self.config_json}. Using default values.")
             self.__config = self.__config_default #Initialize with an empty dictionary if the json is read as invalid
 
         self.ReapyTemplateProjectPath = self.__reapy_template_project_path()
@@ -40,6 +47,10 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         self.SoundscapeVRUnityCommunicationPort = self.__soundscape_vr_unity_communication_port()
         self.EncoderMonoAudioTrackName = self.__encoder_mono_audio_track_name()
         self.EncoderAmbisonicTrackName = self.__encoder_ambisonic_track_name()
+        self.DecoderAmbisonicTrackName = self.__decoder_ambisonic_track_name()
+        self.DecoderBinauralTrackName = self.__decoder_binaural_track_name()
+        self.AmbisonicOrder = self.__ambisonic_order()
+        self.TrackChannels = self.__track_channels()     
         
     def __reapy_template_project_path(self):
         """Returns the path to the Reapy template project."""
@@ -69,8 +80,17 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         """Returns the name of the encoder mono audio track."""
         return self.__config["EncoderMonoAudioTrackName"]
     
-    def _resolve_config_dir(self):
-        return (Path(__file__).parent / self.__config_json_location).resolve()
+    def __decoder_ambisonic_track_name(self):
+        return self.__config["DecoderAmbisonicTrackName"]
+    
+    def __decoder_binaural_track_name(self):
+        return self.__config["DecoderBinauralTrackName"]
+    
+    def __ambisonic_order(self):
+        return int(min(max(self.__config["AmbisonicOrder"],1),10))
+    
+    def __track_channels(self):
+        return int(min(max(self.__config["TrackChannels"],1),128))
     
 #For Debug
 if __name__ == '__main__':

@@ -45,6 +45,7 @@ def Reset():
 def Exit(communicator: SoundscapeVRCommunicationsService):
     print("\nExitting...")
     communicator.disconnect()
+    #reapy.open_project(config.ReapyTemplateProjectPath)
     print("Goodbye...")
 
 async def main():

@@ -4,7 +4,7 @@ from ..AudioPluginController import AudioPluginController
 class AmbisonicENCoder(AudioPluginController):
     plugin_name = "VST: sparta_ambiENC (AALTO) (64ch)"
 
-    _param_defaults = [1,"ACN","SN3D"]
+    _param_defaults = [5,"ACN","SN3D"]
 
     __outputOrder_range = (1,10)
 
@@ -27,7 +27,7 @@ class AmbisonicENCoder(AudioPluginController):
 
     __elevation_range = (-90,90)
 
-    def __init__(self,TrackFX: reapy.FX,Sources: int,params = _param_defaults):
+    def __init__(self,TrackFX: reapy.FX,Sources: int, ambisonic_order: int = 1,params = _param_defaults):
         super().__init__(TrackFX)
         self.Sources = Sources #The number of speakers being used by the ambisonic plugin
         try:
@@ -36,9 +36,11 @@ class AmbisonicENCoder(AudioPluginController):
             print(e)
         
         self._setInitialParams(params)
+
+        self.__setOutputOrder(ambisonic_order)
         
     def _setInitialParams(self,params):
-        self.__setOutputOrder(params[0])
+        #self.__setOutputOrder(params[0])
         self.__setChannelOrder(params[1])
         self.__setNormType(params[2])
         self.setNumSources(self.Sources)

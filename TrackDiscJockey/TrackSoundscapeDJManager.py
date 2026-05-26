@@ -5,6 +5,8 @@ import json
 import asyncio
 import logging
 from AudioPlugins.Sparta.AmbisonicENCoder import AmbisonicENCoder
+from AudioPlugins.Sparta.AmbisonicDECoder import AmbisonicDECoder
+from AudioPlugins.Sparta.AmbisonicBinaural import AmbisonicBINaural
 from uuid import UUID
 from pathlib import Path
 from TrackDiscJockey.SoundTrack import SoundTrack
@@ -30,21 +32,49 @@ class TrackSoundscapeDJManager:
         self.__sounds_folder_path = reapy_controller_config.SoundsLocation
         self.__audiosData = AudiosData(reapy_controller_config)
 
+        self.__EncoderAmbisonic = project._get_track_by_name(reapy_controller_config.EncoderAmbisonicTrackName)
         self.__EncoderMono = project._get_track_by_name(reapy_controller_config.EncoderMonoAudioTrackName)
+        self.__DecoderBinaural = project._get_track_by_name(reapy_controller_config.DecoderBinauralTrackName)
+        self.__DecoderAmbisonic = project._get_track_by_name(reapy_controller_config.DecoderAmbisonicTrackName)
+
         self.__MonoAudiosCounter = 0
-        self.__AmbiENC = AmbisonicENCoder(self.__EncoderMono.fxs[AmbisonicENCoder.plugin_name],1)
+        self.__AmbisonicOrder = reapy_controller_config.AmbisonicOrder
+        self.__AmbiENC = AmbisonicENCoder(self.__EncoderMono.fxs[AmbisonicENCoder.plugin_name],1,self.__AmbisonicOrder)
+        self.__AmbiDEC = AmbisonicDECoder(self.__DecoderAmbisonic.fxs[AmbisonicDECoder.plugin_name],self.__AmbisonicOrder)
+        self.__AmbiBIN = AmbisonicBINaural(self.__DecoderBinaural.fxs[AmbisonicBINaural.plugin_name],self.__AmbisonicOrder)
+
+        self.__TrackSelectAddNewNext = project._get_track_by_name(reapy_controller_config.DecoderAmbisonicTrackName) #The track to preselect before adding a new track
+        self.__InitTrackCount = reapy_controller_config.TrackChannels
 
         self.__availableSoundEffects = {
             "echo": Echo,
             "occlusion": Occlusion,
-            "highLowPass": HighLowPassFilter #TODO: change accoring to unity's id
+            "highLowPass": HighLowPassFilter 
+            #TODO: change according to unity's id
         }
-
-        self.EncoderAmbisonic = project._get_track_by_name(reapy_controller_config.EncoderAmbisonicTrackName)
 
         #Initial config commands
         self.__ReaperTimeSelection.loop()
         self.__AmbiENC.setNumSources(1)
+        self.__setTracksForAmbisonic()
+        self.__setTracksVolumes()
+
+
+    def __setTracksForAmbisonic(self):
+        #Set number of tracks for mono encoder and decoders
+        self.__EncoderMono.set_info_value("I_NCHAN", self.__InitTrackCount)
+        self.__DecoderBinaural.set_info_value("I_NCHAN", self.__InitTrackCount)
+        self.__DecoderAmbisonic.set_info_value("I_NCHAN", self.__InitTrackCount)
+
+    def __setTracksVolumes(self):
+        #Sets the track's volumes
+        linearVolume = self.__db_to_linear(0)
+        
+        RPR.SetMediaTrackInfo_Value(self.__EncoderAmbisonic.id,"D_VOL",linearVolume)
+        RPR.SetMediaTrackInfo_Value(self.__EncoderMono.id,"D_VOL",linearVolume)
+        RPR.SetMediaTrackInfo_Value(self.__DecoderBinaural.id,"D_VOL",linearVolume)
+        RPR.SetMediaTrackInfo_Value(self.__DecoderAmbisonic.id,"D_VOL",linearVolume)
+        
 
     def CommandReceive(self,msg: str) -> str:
         message = json.loads(msg)
@@ -102,6 +132,8 @@ class TrackSoundscapeDJManager:
         #Cursor in 0 to insert the audio and paused
         self.__project.cursor_position = delay
         self.__project.pause()
+        self.__project.unselect_all_tracks()
+        self.__project.tracks[self.__TrackSelectAddNewNext].select()
         #Create a new track with soundtrack class instance and add it to the list
         audioTrackInfo = self.__audiosData.GetAudioFileInfo(audioID) #Prepare the audio's info and check if audio is available
         try:
@@ -177,10 +209,14 @@ class TrackSoundscapeDJManager:
         self.__CurrentMaxAudioDuration = 0.0
 
     def __SetTrackRedirect(self,track: reapy.Track, ambisonic: bool):
+        #Do not route to master
+        RPR.SetMediaTrackInfo_Value(track.id, "B_MAINSEND", 0)
+
         if not ambisonic:
             return self.__SetNormalTrackEncoderRedirect(track)
         else:
             return self.__SetAmbisonicTrackEncoderRedirect(track)
+        
 
     def __SetNormalTrackEncoderRedirect(self,source_track: reapy.Track):
         #First set the new receive count in the encoder
@@ -268,8 +304,8 @@ class TrackSoundscapeDJManager:
             self.__ReallocateMonoSources()
             # Update Sparta source count after reallocation
             self.__AmbiENC.setNumSources(max(self.__MonoAudiosCounter, 1))
-            # Shrink encoder track channels accordingly
-            self.__EncoderMono.set_info_value("I_NCHAN", max(self.__MonoAudiosCounter * 2, 2))
+            # Shrink encoder track channels accordingly, but do not go initially set number
+            self.__EncoderMono.set_info_value("I_NCHAN", max(self.__MonoAudiosCounter * 2, self.__EncoderMonoInitTrackCount))
 
         self.__NewAudioDurations()
 
