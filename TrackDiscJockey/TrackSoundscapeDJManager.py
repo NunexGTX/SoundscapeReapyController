@@ -46,6 +46,12 @@ class TrackSoundscapeDJManager:
         self.__TrackSelectAddNewNext = project._get_track_by_name(reapy_controller_config.DecoderAmbisonicTrackName) #The track to preselect before adding a new track
         self.__InitTrackCount = reapy_controller_config.TrackChannels
 
+        self.__soundscapeTime = 0 #if its 0 its supposed to play forever
+        self.__soundscapeLoop = False
+        self.__soundsacpeInfinite = False
+
+        self.__autoEndSoundscape = True
+
         self.__availableSoundEffects = {
             "echo": Echo,
             "occlusion": Occlusion,
@@ -91,6 +97,10 @@ class TrackSoundscapeDJManager:
         message = json.loads(msg)
         command = message["command"]
 
+        if command == "start_soundscape":
+            self.__NewSoundscape(int(message["duration"]),bool(message["loop"]))
+            return "New Soundscape started"
+
         if command == "new_track":
             try:
                 self.__NewTrack(message["AudioID"],UUID(message["SoundUUID"]), float(message["Volume"]),bool(message["Loop"]),int(message["Delay"]))
@@ -129,6 +139,21 @@ class TrackSoundscapeDJManager:
             return "Track Deleted"
 
         return "Invalid Command or Instructions"
+    
+    def __NewSoundscape(self, duration_seconds: int, loop: bool):
+        self.__soundscapeLoop = loop
+        self.__soundscapeTime = duration_seconds
+        if duration_seconds == 0:
+            self.__soundsacpeInfinite = True
+        else:
+            if self.__autoEndSoundscape:
+                asyncio.create_task(self.__EndSoundscape())
+
+    def __EndSoundscape(self):
+        #Delete all tracks
+        for soundTrack in self.__SoundTracks:
+            self.__DeleteSoundTrack(soundTrack)
+        self.__NewAudioDurations()
 
     def __NewTrack(self,audioID: str, soundUUID: UUID, volume: float, loop: bool, delay: int, redo_track = True):
         #Check if that specific sound with that UUID already exists. This will early return the function but try to make sure this command isn't received
@@ -168,7 +193,7 @@ class TrackSoundscapeDJManager:
         self.__SoundTracks.append(soundTrack)
         self.__NewAudioDurations()
 
-        if not loop:
+        if not loop and self.__soundscapeLoop == False:
             asyncio.create_task(self.__DeleteLoopTrack(soundUUID, soundTrack.audio_duration_seconds+delay))
 
         self.__project.cursor_position = 0 #Get cursor back to 0
@@ -191,11 +216,14 @@ class TrackSoundscapeDJManager:
         if len(self.__SoundTracks) == 0:
             self.__ProjectNoTrackPause()
             return
-
-        # Update max duration from the full list
-        self.__CurrentMaxAudioDuration = max(
-            (st.delay + st.audio_duration_seconds) for st in self.__SoundTracks
-        )
+        
+        if self.__soundsacpeInfinite == True:
+            # Update max duration from the full list
+            self.__CurrentMaxAudioDuration = max(
+                (st.delay + st.audio_duration_seconds) for st in self.__SoundTracks
+            )
+        else: 
+            self.__CurrentMaxAudioDuration = self.__soundscapeTime
 
         # Extend all tracks to the largest clean multiple of their own duration
         self.__ExtendAllTrackItems()
@@ -205,14 +233,18 @@ class TrackSoundscapeDJManager:
     def __ExtendAllTrackItems(self):
         for soundTrack in self.__SoundTracks:
             if soundTrack.loop:
-                native_duration = soundTrack.audio_duration_seconds
-                # How many full plays fit within the longest audio?
-                n_loops = math.floor(self.__CurrentMaxAudioDuration / native_duration)
-                extended_duration = n_loops * native_duration  # always <= max, always a clean loop end
+                if self.__soundscapeLoop == True:
+                    native_duration = soundTrack.audio_duration_seconds
+                    # How many full plays fit within the longest audio?
+                    n_loops = math.floor(self.__CurrentMaxAudioDuration / native_duration)
+                    extended_duration = n_loops * native_duration  # always <= max, always a clean loop end
+                else:
+                    extended_duration = self.__CurrentMaxAudioDuration
 
                 item = soundTrack.Track.items[0]
                 RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
                 item.length = extended_duration
+
 
     def __ProjectNoTrackPause(self):
         self.__project.pause()
@@ -304,6 +336,11 @@ class TrackSoundscapeDJManager:
         if soundTrack is None:
             return
 
+        self.__DeleteSoundTrack(soundTrack)
+
+        self.__NewAudioDurations()
+
+    def __DeleteSoundTrack(self, soundTrack: SoundTrack):
         was_mono = soundTrack.ambiSourceIndex is not None
 
         self.__SoundTracks.remove(soundTrack)
@@ -317,8 +354,7 @@ class TrackSoundscapeDJManager:
             self.__AmbiENC.setNumSources(max(self.__MonoAudiosCounter, 1))
             # Shrink encoder track channels accordingly, but do not go initially set number
             self.__EncoderMono.set_info_value("I_NCHAN", max(self.__MonoAudiosCounter * 2, self.__InitTrackCount))
-
-        self.__NewAudioDurations()
+        
 
     def __ReallocateMonoSources(self):
         # Sort remaining mono tracks by their current index so we reassign in order
