@@ -1,57 +1,64 @@
 @startuml
 
-metaclass SoundscapeVReapy{
+class SoundscapeVReapy{
     -config: SoundscapeReapyControllerConfig
     -project: reapy.Project
     -communicator: SoundscapeVRCommunicationService
-    -tracksSoundscapeDJManager: TracksSoundscapeDJManager
-    -reapyControllerConfig: SoundscapeReapyControllerConfig
+    -trackSoundscapeDJManager: TrackSoundscapeDJManager
     -ReapyInit()
-    -check_reaper_running
+    -check_reaper_running()
     -Reset()
-    -Exit()
+    -Exit(communicator: SoundscapeVRCommunicationService)
     -main()
 }
 
 package TrackDiscJockey{
-    class TracksSoundscapeDJManager{
-        -project: Project
-        -logger: Logger
-        -audiosData: AudiosData
-        -reapyControllerConfig: SoundscapeReapyControllerConfig
-        -SoundTracks: list
-        -ReaperTimeSelection: TimeSelection
-        -EncoderAmbisonic: Track
-        -EncoderMonoAudio: Track
-        -AmbiENC: AmbisonicENCoder
-        -AudioVolumeDBRange: tuple
-        -CurrentMaxAudioDuration: float
-        -MonoEncoderSources: int
-        -PartialAudioStretchFactor: float
-        -AvailableSoundEffects: dict
+    class TrackSoundscapeDJManager{
+        -__project: Project
+        -__logger: Logger
+        -__audiosData: AudiosData
+        -__reapy_controller_config: SoundscapeReapyControllerConfig
+        -__SoundTracks: list
+        -__ReaperTimeSelection: TimeSelection
+        -__EncoderAmbisonic: Track
+        -__EncoderMono: Track
+        -__DecoderBinaural: Track
+        -__DecoderAmbisonic: Track
+        -__AmbiENC: AmbisonicENCoder
+        -__AmbiDEC: AmbisonicDECoder
+        -__AmbiBIN: AmbisonicBINaural
+        -__AudioVolumeDBRange: tuple
+        -__CurrentMaxAudioDuration: float
+        -__MonoAudiosCounter: int
+        -__AmbisonicOrder: int
+        -__availableSoundEffects: dict
         +Playing: bool
         +TrackSoundscapeDJManager(project: Project, reapyControllerConfig: SoundscapeReapyControllerConfig)
         +CommandReceive(command: str): str
-        -NewTrack(AudioID: str, SoundUUID: UUID, loop: bool)
-        -get_audio_path()
-        -NewAudioDurations()
-        -SetTrackRedirect(track: Track, ambisonic: bool)
-        -SetNormalTrackEncoderRedirect(track: Track)
-        -SetAmbisonicTrackEncoderRedirect(track: Track)
-        -ProjectNoTrackPause()
-        -ExtendAllTrackItems()
-        -UpdateAudioPosition(SoundUUID: UUID, position_angles: tuple, distanceRadius: float)
-        -CalculateDistanceDB(distanceRadius: float): float
-        -db_to_linear(db: float): float
-        -AddSoundEffect(SoundUUID: UUID, effect_name: str, effectParams: list): int
-        -RemoveSoundEffect(SoundUUID: UUID, effect_name: str)
-        -MuteTrack(SoundUUID: UUID)
-        -UnmuteTrack(SoundUUID: UUID)
-        -DeleteTrack(SoundUUID: UUID)
-        -RellocateMonoSources()
-        -FindSendToTrack(source_track: reapy.Track, dest_track: reapy.Track)
-        -DeleteLoopTrack(SoundUUID: UUID)
-        -FindTrackByUUID(SoundUUID: UUID): SoundTrack
+        -__NewTrack(audioID: str, soundUUID: UUID, volume: float, loop: bool, delay: int)
+        -__get_audio_path(audioTrackInfo: AudioData): str
+        -__NewAudioDurations()
+        -__Set_Track_Channels(track: Track, ambisonic: bool)
+        -__SetTrackRedirect(track: Track, ambisonic: bool): int
+        -__SetNormalTrackEncoderRedirect(track: Track): int
+        -__SetAmbisonicTrackEncoderRedirect(track: Track)
+        -__ProjectNoTrackPause()
+        -__ExtendAllTrackItems()
+        -__UpdateAudioPosition(SoundUUID: UUID, position_angles: tuple, distanceRadius: float)
+        -__CalculateDistanceDB(distanceRadius: float): float
+        -__db_to_linear(db: float): float
+        -__addSoundEffect(SoundUUID: UUID, effect_name: str, effectParams: list)
+        -__removeSoundEffect(SoundUUID: UUID, effect_name: str)
+        -__muteTrack(SoundUUID: UUID)
+        -__unmuteTrack(SoundUUID: UUID)
+        -__DeleteTrack(SoundUUID: UUID)
+        -__ReallocateMonoSources()
+        -__FindSendToTrack(source_track: Track, dest_track: Track)
+        -__DeleteLoopTrack(SoundUUID: UUID, audio_time: float)
+        -__FindTrackByUUID(SoundUUID: UUID): SoundTrack
+        -__setTracksForAmbisonic()
+        -__setTracksVolumes()
+        -__setDecoderMutes()
     }
 
     class SoundTrack{
@@ -59,70 +66,69 @@ package TrackDiscJockey{
         +SoundUUID: UUID
         +AudioID: str
         +Track: Track
-        +TrackName: str
-        +TrackIndex: int
         +ambisonic: bool
         +ambiSourceIndex: int
         +positionalRot: tuple
         +distanceRadius: float
         +currentVolumeDB: float
+        +VolumeGain: float
         +SoundEffects: list
         +muteState: bool
         +audio_duration_seconds: float
-        +SoundTrack(audioData: AudioData, soundUUID: UUID, track: Track)
+        +delay: int
+        +loop: bool
+        +SoundTrack(audioData: AudioData, soundUUID: UUID, track: Track, delay: int, loop: bool)
         +mute()
         +unmute()
-        +newSoundEffect(reapy.FX)
-        +findSoundEffect(): SoundEffect
+        +newSoundEffect(soundFX: SoundEffect)
+        +deleteSoundEffect(soundFX: SoundEffect)
     }
 
-    TracksSoundscapeDJManager *-- SoundTrack
-    SoundTrack o-- SoundscapeReapyControllerConfig
+    TrackSoundscapeDJManager *-- SoundTrack
 }
 
-SoundscapeVReapy *-- TracksSoundscapeDJManager
+SoundscapeVReapy *-- TrackSoundscapeDJManager
 
 package jsonUtils{
     abstract class jsonDealer{
-        #get_reapy_controller_dir()
-        {abstract}#ReadJson()
+        #_get_reapy_controller_dir()
+        #_resolve_config_dir()
+        {abstract}#_ReadJson()
     }
 
     class SoundscapeReapyControllerConfig{
-        -config_json_location: str
-        -soundscpae_reapy_controller_dir_flag: str
-        -config_default: Dictionary
-        -config: Dictionary
+        -config_json: str
+        -config_default: dict
+        -config: dict
         +ReapyTemplateProjectPath: str
         +SoundsLocation: str
         +SoundscapeVRUnityCommunicationPort: int
         +EncoderAmbisonicTrackName: str
         +EncoderMonoAudioTrackName: str
+        +DecoderAmbisonicTrackName: str
+        +DecoderBinauralTrackName: str
+        +AmbisonicOrder: int
+        +TrackChannels: int
+        +MuteBinauralDecoder: bool
+        +MuteAmbisonicDecoder: bool
         +SoundscapeReapyControllerConfig()
-        #ReadJson()
-        -reapy_template_project_path()
-        -sounds_location()
-        -soundscape_vr_unity_communication_port()
-        -encoder_ambisonic_track_name()
-        -encoder_mono_audio_track_name()
-        -resolve_config_dir()
+        #_ReadJson()
+        -_apply_config()
     }
 
-    TracksSoundscapeDJManager o-- SoundscapeReapyControllerConfig
+    TrackSoundscapeDJManager o-- SoundscapeReapyControllerConfig
     SoundscapeReapyControllerConfig <|-- jsonDealer
 
     class AudiosData{
-        -audios_json_file_name: str
-        -ambisonic_type_name: str
         +AudiosInfo: list
-        +AudiosData()
-        #ReadJson()
+        +AudiosData(reapy_config: SoundscapeReapyControllerConfig)
+        #_ReadJson()
         +GetAudioFileInfo(id: str): AudioData
     }
     AudiosData <|-- jsonDealer
     SoundTrack *-- AudioData
 
-    dataclass AudioData{
+    class AudioData{
         +sound_id: str
         +sound_name: str
         +ambisonic: bool
@@ -130,108 +136,163 @@ package jsonUtils{
     }
 
     AudiosData ..> AudioData
-    TracksSoundscapeDJManager *-- AudiosData
-}
+    TrackSoundscapeDJManager *-- AudiosData
 
-SoundscapeVReapy *-- SoundscapeReapyControllerConfig
+    SoundscapeVReapy *-- SoundscapeReapyControllerConfig
+    SoundscapeVRCommunicationService o-- SoundscapeReapyControllerConfig
+    SoundTrack o-- SoundscapeReapyControllerConfig
+}
 
 package SoundscapeVRCommunications{
     class SoundscapeVRCommunicationService{
-        -communication_port: int
-        -unity_server_ip: string
-        -config: SoundscapeReapyControllerConfig
-        +SoundscapeVRCommunicationsService(config: SoundscapeReapyControllerConfig)
-        +ReceiveRequest(): str
-        +WaitForConnection()
-        +SendEffectIndex()
+        -__communication_port: int
+        -__host: str
+        -__reapy_controller_ip: str
+        -__logger: Logger
+        -__buffer_size: int
+        -__server_socket: socket
+        -__client_socket: socket
+        -__is_connected: bool
+        +SoundscapeVRCommunicationService(config: SoundscapeReapyControllerConfig)
+        +is_connected: bool
+        +start()
+        +receiveRequest(): str
+        +sendResponse(response: str)
+        +wait_for_connection()
+        +disconnect()
     }
-    note right: Send more responses to unity if needed to confirm actions done
-
 }
 
 SoundscapeVReapy *-- SoundscapeVRCommunicationService
-SoundscapeVRCommunicationService o-- SoundscapeReapyControllerConfig
 
 package AudioPlugins{
     abstract class AudioPluginController{
         +sliderVals: tuple
-        +plugin_name: string
-        #param_defaults: list
         #TrackFX: FX
+        {abstract}+plugin_name: str
+        {abstract}#_param_defaults: list
         +AudioPluginController(TrackFX: FX)
-        {abstract} #checkInitialParams(params: list)
-        {abstract} #setInitialParams(params: list)
-        #paramValCalc(x,min_val,max_val)
+        {abstract}#_checkInitialParams(params: list)
+        {abstract}#_setInitialParams(params: list)
+        #_param_val_calc(x, min_val, max_val): float
+        #_param_double_val_calc(x, min_val, max_val): float
     }
 
     package SoundEffects{
-        note as N1
-            More Sound Effects will be added overtime if we end up needing them
-        end note
-
         abstract class SoundEffect{
-            +effectParamsList: list
-            {abstract}updateSoundEffectParams(params: list)
-
+            +effectParamsList: dict
+            {abstract}+updateSoundEffectParams(params: list)
+            +add_to_track(track: Track): SoundEffect
+            +remove_from_track()
         }
 
         SoundEffect <|-- AudioPluginController
 
-        class Reverb{
-            +Wet: float
-            -Wet_range: tuple
-            +Dry: float
-            -Dry_range: tuple
-            +Pre_Verb: float
-            -Pre_Verb_range: tuple
-            +Width: float
-            -With_range: tuple
-            +Pan: float
-            -Pan_range: tuple
-            +Reverb(TrackFX:FX)
-            +setWetValue(dbWet: float)
-            +setDryValue(dbWet: float)
-            +setPre_verb(ms: float)
-            +setWidth(width_val: float)
-            +setPan(pan_val:float)
+        class Echo{
+            +plugin_name: str
+            +effectParamsList: dict
+            +Echo(TrackFX: FX, params: list)
+            +updateSoundEffectParams(params: list)
+            +setApplyEcho(enabled: bool)
+            +setDelay(delay_ms: float)
+            +setDecayRatio(ratio: float)
+            +setDryMix(value: float)
+            +setWetMix(value: float)
         }
 
-        Reverb <|-- SoundEffect
+        Echo <|-- SoundEffect
 
+        class Occlusion{
+            +plugin_name: str
+            +effectParamsList: dict
+            -_general_occlusion: float
+            -_low_freq: float
+            -_mid_freq: float
+            -_high_freq: float
+            -_frequency_dependent: bool
+            +Occlusion(TrackFX: FX, params: list)
+            +updateSoundEffectParams(params: list)
+            +setApplyOcclusion(enabled: bool)
+            +setFrequencyDependent(enabled: bool)
+            +setGeneralOcclusion(value: float)
+            +setLowFreq(value: float)
+            +setMidFreq(value: float)
+            +setHighFreq(value: float)
+        }
+
+        Occlusion <|-- SoundEffect
+
+        class HighLowPassFilter{
+            +plugin_name: str
+            +effectParamsList: dict
+            -_hp_freq: float
+            -_lp_freq: float
+            +HighLowPassFilter(TrackFX: FX, params: list)
+            +updateSoundEffectParams(params: list)
+            +setApplyFilter(enabled: bool)
+            +setHighPassFreq(freq: float)
+            +setLowPassFreq(freq: float)
+        }
+
+        HighLowPassFilter <|-- SoundEffect
     }
-    TracksSoundscapeDJManager *-- Reverb
+
+    TrackSoundscapeDJManager *-- Echo
+    TrackSoundscapeDJManager *-- Occlusion
+    TrackSoundscapeDJManager *-- HighLowPassFilter
 
     package Sparta{
 
         class AmbisonicENCoder{
-            -outputOrder_range: tuple
-            -ChannelOrderVals: dictionary
-            -NormTypeVals: dictionary
-            -source_range: tuple
-            -spatial_sound_positions_start_index: int
-            -azim_range: tuple
-            -elevation_range: tuple
-            -initial_sources: int
-            +AmbisonicENCoder(TrackFX: FX, params: list)
-            #checkInitialParams(params: list)
-            #setInitialParams(params: list)
-            -setOutputOrder(outputOrder_val: str)
-            -setChannelOrder(channelOrder_val: str)
-            -setNormType(normType_val: str)
+            -__outputOrder_range: tuple
+            -__ChannelOrderVals: dict
+            -__NormTypeVals: dict
+            -__source_range: tuple
+            -__spatial_sound_positions_start_index: int
+            -__azim_range: tuple
+            -__elevation_range: tuple
+            +Sources: int
+            +AmbisonicENCoder(TrackFX: FX, Sources: int, ambisonic_order: int, params: list)
+            #_checkInitialParams(params: list)
+            #_setInitialParams(params: list)
             +setNumSources(numSources_val: int)
             +SpeakersPositions(sources_positions: list)
             +SpeakerPositions(source_number: int, position: tuple)
             +setSpeakerAzim(source_number: int, azim_value: float)
-            +setSpeakerElevation(source_numer: int, elevation_value: float)
-            -check_speaker_availability(source_number: int)
-            -check_azim_value(azim_val: float)
-            -check_elevation_value(elevation_val: float)
+            +setSpeakerElevation(source_number: int, elevation_value: float)
+            -__setOutputOrder(outputOrder_val: int)
+            -__setChannelOrder(channelOrder_val: str)
+            -__setNormType(normType_val: str)
+            -__check_speaker_availability(source_number: int)
+            -__check_azim_value(azim_val: float)
+            -__check_elevation_value(elevation_val: float)
         }
 
         AmbisonicENCoder <|-- AudioPluginController
+
+        class AmbisonicDECoder{
+            -__inputOrder_range: tuple
+            +AmbisonicDECoder(TrackFX: FX, ambisonic_order: int)
+            #_checkInitialParams(params: list)
+            #_setInitialParams(params: list)
+            -__setInputOrder(inputOrder_val: int)
+        }
+
+        AmbisonicDECoder <|-- AudioPluginController
+
+        class AmbisonicBINaural{
+            -__inputOrder_range: tuple
+            +AmbisonicBINaural(TrackFX: FX, ambisonic_order: int)
+            #_checkInitialParams(params: list)
+            #_setInitialParams(params: list)
+            -__setInputOrder(inputOrder_val: int)
+        }
+
+        AmbisonicBINaural <|-- AudioPluginController
     }
 
-    TracksSoundscapeDJManager *-- AmbisonicENCoder
+    TrackSoundscapeDJManager *-- AmbisonicENCoder
+    TrackSoundscapeDJManager *-- AmbisonicDECoder
+    TrackSoundscapeDJManager *-- AmbisonicBINaural
 }
-
 @enduml
