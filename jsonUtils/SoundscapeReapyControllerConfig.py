@@ -16,7 +16,9 @@ class SoundscapeReapyControllerConfig(jsonDealer):
             "DecoderAmbisonicTrackName": "DecoderAmbisonic",
             "DecoderBinauralTrackName": "DecoderBinaural",
             "AmbisonicOrder": 5,
-            "TrackChannels": 38
+            "TrackChannels": 38,
+            "MuteBinauralDecoder": False,
+            "MuteAmbisonicDecoder": False
         }
 
     def __init__(self):
@@ -37,11 +39,22 @@ class SoundscapeReapyControllerConfig(jsonDealer):
 
         except FileNotFoundError:
             print(f"Error: Config file not found at {self.config_json}.  Using default values.")
-            self.__config = self.__config_default # Initialize with an empty dictionary if the file doesn't exist
+            self.__config = self.__config_default
         except json.JSONDecodeError:
             print(f"Error: Invalid JSON format in {self.config_json}. Using default values.")
-            self.__config = self.__config_default #Initialize with an empty dictionary if the json is read as invalid
+            self.__config = self.__config_default
+        except Exception as e:
+            print(f"Error: Failed to read config from {self.config_json} ({e}). Using default values.")
+            self.__config = self.__config_default
 
+        try:
+            self._apply_config()
+        except Exception as e:
+            print(f"Error: Failed to apply config values ({e}). Falling back to defaults.")
+            self.__config = self.__config_default
+            self._apply_config()
+
+    def _apply_config(self):
         self.ReapyTemplateProjectPath = self.__reapy_template_project_path()
         self.SoundsLocation = self.__sounds_location()
         self.SoundscapeVRUnityCommunicationPort = self.__soundscape_vr_unity_communication_port()
@@ -50,7 +63,9 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         self.DecoderAmbisonicTrackName = self.__decoder_ambisonic_track_name()
         self.DecoderBinauralTrackName = self.__decoder_binaural_track_name()
         self.AmbisonicOrder = self.__ambisonic_order()
-        self.TrackChannels = self.__track_channels()     
+        self.TrackChannels = self.__track_channels()
+        self.MuteBinauralDecoder = self.__mute_binaural_decoder()
+        self.MuteAmbisonicDecoder = self.__mute_ambisonic_decoder()
         
     def __reapy_template_project_path(self):
         """Returns the path to the Reapy template project."""
@@ -91,6 +106,12 @@ class SoundscapeReapyControllerConfig(jsonDealer):
     
     def __track_channels(self):
         return int(min(max(self.__config["TrackChannels"],1),128))
+    
+    def __mute_binaural_decoder(self):
+        return self.__config["MuteBinauralDecoder"]
+    
+    def __mute_ambisonic_decoder(self):
+        return self.__config["MuteAmbisonicDecoder"]
     
 #For Debug
 if __name__ == '__main__':

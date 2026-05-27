@@ -58,7 +58,7 @@ class TrackSoundscapeDJManager:
         self.__AmbiENC.setNumSources(1)
         self.__setTracksForAmbisonic()
         self.__setTracksVolumes()
-
+        self.__setDecoderMutes()
 
     def __setTracksForAmbisonic(self):
         #Set number of tracks for mono encoder and decoders
@@ -74,6 +74,17 @@ class TrackSoundscapeDJManager:
         RPR.SetMediaTrackInfo_Value(self.__EncoderMono.id,"D_VOL",linearVolume)
         RPR.SetMediaTrackInfo_Value(self.__DecoderBinaural.id,"D_VOL",linearVolume)
         RPR.SetMediaTrackInfo_Value(self.__DecoderAmbisonic.id,"D_VOL",linearVolume)
+
+    def __setDecoderMutes(self):
+        if self.__reapy_controller_config.MuteBinauralDecoder:
+            self.__DecoderBinaural.mute()
+        else:
+            self.__DecoderBinaural.unmute()
+
+        if self.__reapy_controller_config.MuteAmbisonicDecoder:
+            self.__DecoderAmbisonic.mute()
+        else:
+            self.__DecoderAmbisonic.unmute()
         
 
     def CommandReceive(self,msg: str) -> str:

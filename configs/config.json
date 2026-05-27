@@ -9,7 +9,9 @@
             "DecoderAmbisonicTrackName": "DecoderAmbisonic",
             "DecoderBinauralTrackName": "DecoderBinaural",
             "AmbisonicOrder": 5,
-            "TrackChannels": 38
+            "TrackChannels": 38,
+            "MuteBinauralDecoder": true,
+            "MuteAmbisonicDecoder": false
         }
     ]
 }
