@@ -1,3 +1,4 @@
+import math
 import reapy
 from .SoundEffect import SoundEffect
 
@@ -6,10 +7,15 @@ class Occlusion(SoundEffect):
 
     effectParamsList = {
         "gain_low":    1,
+        "gain_low_mid": 4,
         "gain_mid":    7,
         "gain_high":  10,
         "global_gain": 15,
     }
+
+    _PLUGIN_GAIN_RANGE = (-150, 12)  # actual ReaEQ gain slider range, used for reapy normalization
+    _GAIN_RANGE = (-150, 0)          # our working range: attenuate only, no boost
+    _FREQ_RANGE = (20, 22050)  # ReaEQ frequency slider range in Hz (log-scale)
 
     _param_defaults = [False, False, 1.0, 1.0, 1.0, 1.0]
     # [apply_occlusion, frequency_dependent, general_occlusion, low_freq, mid_freq, high_freq]
@@ -38,12 +44,16 @@ class Occlusion(SoundEffect):
             if not 0.0 <= val <= 1.0:
                 raise ValueError(f"{name} must be 0.0–1.0, got {val}")
 
+    def _log_freq_normalize(self, freq: float) -> float:
+        f_min, f_max = self._FREQ_RANGE
+        return math.log10(freq / f_min) / math.log10(f_max / f_min)
+
     def _initFixedParams(self):
-        # Band 1 (Low Shelf) → 300 Hz: read from Band 2 which defaults to 300 Hz
-        self.TrackFX.params[0] = self.TrackFX.params[3]
-        # Lock Band 2 gain permanently at 0 dB
-        self.TrackFX.params[4] = 0.5
-        # Band 3 (1000 Hz) and Band 4 (5000 Hz) are already at target by default
+        self.TrackFX.params[0] = self._log_freq_normalize(800)               # Band 1 → 800 Hz (Low Shelf)
+        self.TrackFX.params[3] = self._log_freq_normalize(800)               # Band 2 parked at 800 Hz
+        self.TrackFX.params[4] = self._param_val_calc(0, *self._PLUGIN_GAIN_RANGE)  # Band 2 gain locked at 0 dB
+        self.TrackFX.params[6] = self._log_freq_normalize(2000)              # Band 3 → 2000 Hz (Mid Peak)
+        self.TrackFX.params[9] = self._log_freq_normalize(8000)              # Band 4 → 8000 Hz (High Shelf)
 
     def _setInitialParams(self, params):
         self.updateSoundEffectParams(params)
@@ -62,16 +72,17 @@ class Occlusion(SoundEffect):
         self.setHighFreq(float(high))
 
     def _applyBands(self):
-        db = (self._general_occlusion - 1.0) * 60
-        self.TrackFX.params[15] = self._param_val_calc(db, -60, 60)
+        attenuation_range = abs(self._GAIN_RANGE[0])  # 150
+        db = (self._general_occlusion - 1.0) * attenuation_range
+        self.TrackFX.params[15] = self._param_val_calc(db, *self._PLUGIN_GAIN_RANGE)
 
         if self._frequency_dependent:
-            for idx, freq in [(1, self._low_freq), (7, self._mid_freq), (10, self._high_freq)]:
+            for idx, freq in [(1, self._low_freq),(4,self._low_freq), (7, self._mid_freq), (10, self._high_freq)]:
                 combined = self._general_occlusion * freq
-                db = (combined - 1.0) * 60
-                self.TrackFX.params[idx] = self._param_val_calc(db, -60, 60)
+                db = (combined - 1.0) * attenuation_range
+                self.TrackFX.params[idx] = self._param_val_calc(db, *self._PLUGIN_GAIN_RANGE)
         else:
-            zero_db = self._param_val_calc(0, -60, 60)
+            zero_db = self._param_val_calc(0, *self._PLUGIN_GAIN_RANGE)
             for idx in [1, 7, 10]:
                 self.TrackFX.params[idx] = zero_db
 

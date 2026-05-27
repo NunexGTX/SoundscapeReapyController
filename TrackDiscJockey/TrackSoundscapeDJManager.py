@@ -237,7 +237,7 @@ class TrackSoundscapeDJManager:
         return self.__MonoAudiosCounter
 
     def __SetAmbisonicTrackEncoderRedirect(self,source_track: reapy.Track, num_channels = 4):
-        send = source_track.add_send(self.EncoderAmbisonic)
+        send = source_track.add_send(self.__EncoderAmbisonic)
 
         # Encode: start_ch (0) | (num_channels - 1) << 10
         ch_value = 0 | ((num_channels - 1) << 10)  # = 3072 for 4ch
@@ -305,7 +305,7 @@ class TrackSoundscapeDJManager:
             # Update Sparta source count after reallocation
             self.__AmbiENC.setNumSources(max(self.__MonoAudiosCounter, 1))
             # Shrink encoder track channels accordingly, but do not go initially set number
-            self.__EncoderMono.set_info_value("I_NCHAN", max(self.__MonoAudiosCounter * 2, self.__EncoderMonoInitTrackCount))
+            self.__EncoderMono.set_info_value("I_NCHAN", max(self.__MonoAudiosCounter * 2, self.__InitTrackCount))
 
         self.__NewAudioDurations()
 
