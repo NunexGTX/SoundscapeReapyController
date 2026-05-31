@@ -10,8 +10,9 @@
             "DecoderBinauralTrackName": "DecoderBinaural",
             "AmbisonicOrder": 5,
             "TrackChannels": 38,
-            "MuteBinauralDecoder": true,
-            "MuteAmbisonicDecoder": false
+            "MaxInfiniteSoundscapeMinutesTime": 40,
+            "MuteBinauralDecoder": false,
+            "MuteAmbisonicDecoder": true
         }
     ]
 }

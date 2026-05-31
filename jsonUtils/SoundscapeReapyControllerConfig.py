@@ -17,6 +17,7 @@ class SoundscapeReapyControllerConfig(jsonDealer):
             "DecoderBinauralTrackName": "DecoderBinaural",
             "AmbisonicOrder": 5,
             "TrackChannels": 38,
+            "MaxInfiniteSoundscapeMinutesTime": 40,
             "MuteBinauralDecoder": False,
             "MuteAmbisonicDecoder": False
         }
@@ -64,6 +65,7 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         self.DecoderBinauralTrackName = self.__decoder_binaural_track_name()
         self.AmbisonicOrder = self.__ambisonic_order()
         self.TrackChannels = self.__track_channels()
+        self.MaxInfiniteSoundscapeMinutesTime = self.__max_inifinite_soundscape_minutes_time()
         self.MuteBinauralDecoder = self.__mute_binaural_decoder()
         self.MuteAmbisonicDecoder = self.__mute_ambisonic_decoder()
         
@@ -106,6 +108,9 @@ class SoundscapeReapyControllerConfig(jsonDealer):
     
     def __track_channels(self):
         return int(min(max(self.__config["TrackChannels"],1),128))
+    
+    def __max_inifinite_soundscape_minutes_time(self):
+        return int(self.__config["MaxInfiniteSoundscapeMinutesTime"])
     
     def __mute_binaural_decoder(self):
         return self.__config["MuteBinauralDecoder"]

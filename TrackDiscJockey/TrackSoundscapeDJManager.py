@@ -2,7 +2,7 @@ import reapy
 import math
 from reapy import reascript_api as RPR
 import json
-import asyncio
+import threading
 import logging
 from AudioPlugins.Sparta.AmbisonicENCoder import AmbisonicENCoder
 from AudioPlugins.Sparta.AmbisonicDECoder import AmbisonicDECoder
@@ -32,6 +32,8 @@ class TrackSoundscapeDJManager:
         self.__sounds_folder_path = reapy_controller_config.SoundsLocation
         self.__audiosData = AudiosData(reapy_controller_config)
 
+        self.__NonLoopSoundtracks = [] #Tracks to delete after 1 reaper loop
+
         self.__EncoderAmbisonic = project._get_track_by_name(reapy_controller_config.EncoderAmbisonicTrackName)
         self.__EncoderMono = project._get_track_by_name(reapy_controller_config.EncoderMonoAudioTrackName)
         self.__DecoderBinaural = project._get_track_by_name(reapy_controller_config.DecoderBinauralTrackName)
@@ -48,9 +50,12 @@ class TrackSoundscapeDJManager:
 
         self.__soundscapeTime = 0 #if its 0 its supposed to play forever
         self.__soundscapeLoop = False
-        self.__soundsacpeInfinite = False
-
-        self.__autoEndSoundscape = True
+        self.__soundscapeInfinite = False
+        self.__soundscapeInfiniteLimit = reapy_controller_config.MaxInfiniteSoundscapeMinutesTime
+        self.__SoundscapePlaying = False
+        self.__SoundscapeEditMode = False
+        self.__lock = threading.Lock()
+        self.__nonloop_timer: threading.Timer | None = None
 
         self.__availableSoundEffects = {
             "echo": Echo,
@@ -94,14 +99,29 @@ class TrackSoundscapeDJManager:
         
 
     def CommandReceive(self,msg: str) -> str:
-        message = json.loads(msg)
+        try:
+            with self.__lock:
+                return self.__HandleCommand(json.loads(msg))
+        except (json.JSONDecodeError, KeyError) as e:
+            self.__logger.error(f"Malformed command: {e}")
+            return "Invalid Command or Instructions"
+
+    def __HandleCommand(self, message: dict) -> str:
         command = message["command"]
 
-        if command == "start_soundscape":
-            self.__NewSoundscape(int(message["duration"]),bool(message["loop"]))
+        if command == "new_soundscape":
+            self.__NewSoundscape(int(message["Duration"]),bool(message["Loop"]))
             return "New Soundscape started"
 
-        if command == "new_track":
+        elif command == "start_soundscape":
+            self.__StartSoundscape()
+            return "Soundscape has started"
+
+        elif command == "end_soundscape":
+            self.__EndSoundscape()
+            return "Soundscape has been finished"
+
+        elif command == "new_track":
             try:
                 self.__NewTrack(message["AudioID"],UUID(message["SoundUUID"]), float(message["Volume"]),bool(message["Loop"]),int(message["Delay"]))
             except FileNotFoundError:
@@ -109,30 +129,31 @@ class TrackSoundscapeDJManager:
                 self.__logger.error(f"ERROR: The audio track with id {audioID} has no valid audio file in the sounds folder.")
                 return "Track was not created successfully in Reaper. Reason: The audio file is not available in SoundscapeVReapy Controller"
             return "Track Created in Reaper"
-        
+
         elif command == "source_position":
             uuid = UUID(message["SoundUUID"])
             position_angles = (message["azim"],message["elev"])  # (azim, elevation)
             distance = float(message["distance"])
-            self.__UpdateAudioPosition(uuid, position_angles, distance)
+            if not self.__UpdateAudioPosition(uuid, position_angles, distance):
+                return "Source Position Failed: UUID not found"
             return "Source Position Updated"
-        
+
         elif command == "mute":
             self.__muteTrack(UUID(message["SoundUUID"]))
             return "Muted Track"
-        
+
         elif command == "unmute":
             self.__unmuteTrack(UUID(message["SoundUUID"]))
             return "Unmuted Track"
-        
+
         elif command == "add_effect":
             self.__addSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]),list(message["EffectParams"]))
             return "Effect Added to Track"
-        
+
         elif command == "remove_effect":
             self.__removeSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]))
             return "Effect Removed from Track"
-        
+
         elif command == "delete_track":
             uuid = UUID(message["SoundUUID"])
             self.__DeleteTrack(uuid)
@@ -143,16 +164,31 @@ class TrackSoundscapeDJManager:
     def __NewSoundscape(self, duration_seconds: int, loop: bool):
         self.__soundscapeLoop = loop
         self.__soundscapeTime = duration_seconds
+        self.__soundscapeInfinite = False
         if duration_seconds == 0:
-            self.__soundsacpeInfinite = True
-        else:
-            if self.__autoEndSoundscape:
-                asyncio.create_task(self.__EndSoundscape())
+            self.__soundscapeInfinite = True
+        
+        self.__NewAudioDurations()
+        #self.__project.play()
+
+    def __StartSoundscape(self):
+        if self.__nonloop_timer:
+            self.__nonloop_timer.cancel()
+        self.__project.play()
+        self.__SoundscapePlaying = True
+        self.__nonloop_timer = threading.Timer(
+            self.__CurrentMaxAudioDuration, self.__DeleteTracksAfterLoop
+        )
+        self.__nonloop_timer.start()
 
     def __EndSoundscape(self):
-        #Delete all tracks
-        for soundTrack in self.__SoundTracks:
+        if self.__nonloop_timer:
+            self.__nonloop_timer.cancel()
+            self.__nonloop_timer = None
+        for soundTrack in list(self.__SoundTracks):
             self.__DeleteSoundTrack(soundTrack)
+        self.__SoundscapePlaying = False
+        self.__project.stop()
         self.__NewAudioDurations()
 
     def __NewTrack(self,audioID: str, soundUUID: UUID, volume: float, loop: bool, delay: int, redo_track = True):
@@ -169,7 +205,7 @@ class TrackSoundscapeDJManager:
         self.__project.cursor_position = delay
         self.__project.pause()
         self.__project.unselect_all_tracks()
-        self.__project.tracks[self.__TrackSelectAddNewNext].select()
+        self.__TrackSelectAddNewNext.select()
         #Create a new track with soundtrack class instance and add it to the list
         audioTrackInfo = self.__audiosData.GetAudioFileInfo(audioID) #Prepare the audio's info and check if audio is available
         try:
@@ -191,13 +227,19 @@ class TrackSoundscapeDJManager:
         soundTrack.ambiSourceIndex = ambi_source_index
         soundTrack.VolumeGain = volume
         self.__SoundTracks.append(soundTrack)
-        self.__NewAudioDurations()
+        #self.__NewAudioDurations()
 
-        if not loop and self.__soundscapeLoop == False:
-            asyncio.create_task(self.__DeleteLoopTrack(soundUUID, soundTrack.audio_duration_seconds+delay))
+        if not loop and self.__soundscapeLoop == False: #If the audio isnt even supposed to repeat, we have to avoid it being replayed after the project loops
+            self.__SetNonLoopTrackDeactivation(soundTrack)
+            #asyncio.create_task(self.__DeleteLoopTrack(soundUUID, soundTrack.audio_duration_seconds+delay))
+        elif loop:
+            item = soundTrack.Track.items[0]
+            RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
+            item.length = self.__CurrentMaxAudioDuration
 
         self.__project.cursor_position = 0 #Get cursor back to 0
-        self.__project.play()
+        if self.__SoundscapePlaying:
+            self.__StartSoundscape()
 
     def __get_audio_path(self,audioTrackInfo: AudioData):
         audioPath = Path(self.__sounds_folder_path+"/"+audioTrackInfo.fileName)
@@ -212,44 +254,22 @@ class TrackSoundscapeDJManager:
         else:
             track.set_info_value("I_NCHAN", 4)
 
+    def __SetNonLoopTrackDeactivation(self,soundTrack):
+        self.__NonLoopSoundtracks.append(soundTrack)
+
+    def __DeleteTracksAfterLoop(self):
+        with self.__lock:
+            for soundTrack in list(self.__NonLoopSoundtracks):
+                self.__DeleteSoundTrack(soundTrack)
+            self.__NonLoopSoundtracks.clear()
+
     def __NewAudioDurations(self):
-        if len(self.__SoundTracks) == 0:
-            self.__ProjectNoTrackPause()
-            return
-        
-        if self.__soundsacpeInfinite == True:
-            # Update max duration from the full list
-            self.__CurrentMaxAudioDuration = max(
-                (st.delay + st.audio_duration_seconds) for st in self.__SoundTracks
-            )
+        if self.__soundscapeInfinite == True:
+            self.__CurrentMaxAudioDuration = self.__soundscapeInfiniteLimit
         else: 
             self.__CurrentMaxAudioDuration = self.__soundscapeTime
 
-        # Extend all tracks to the largest clean multiple of their own duration
-        self.__ExtendAllTrackItems()
-
         self.__ReaperTimeSelection._set_start_end(0, self.__CurrentMaxAudioDuration)
-    
-    def __ExtendAllTrackItems(self):
-        for soundTrack in self.__SoundTracks:
-            if soundTrack.loop:
-                if self.__soundscapeLoop == True:
-                    native_duration = soundTrack.audio_duration_seconds
-                    # How many full plays fit within the longest audio?
-                    n_loops = math.floor(self.__CurrentMaxAudioDuration / native_duration)
-                    extended_duration = n_loops * native_duration  # always <= max, always a clean loop end
-                else:
-                    extended_duration = self.__CurrentMaxAudioDuration
-
-                item = soundTrack.Track.items[0]
-                RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
-                item.length = extended_duration
-
-
-    def __ProjectNoTrackPause(self):
-        self.__project.pause()
-        self.__project.cursor_position = 0
-        self.__CurrentMaxAudioDuration = 0.0
 
     def __SetTrackRedirect(self,track: reapy.Track, ambisonic: bool):
         #Do not route to master
@@ -288,8 +308,7 @@ class TrackSoundscapeDJManager:
         # Get the raw REAPER track pointer and send index
         send_idx = send.index
         track_ptr = source_track.id
-        
-        RPR = reapy.reascript_api
+
         RPR.SetTrackSendInfo_Value(track_ptr, 0, send_idx, "I_SRCCHAN", ch_value)
         RPR.SetTrackSendInfo_Value(track_ptr, 0, send_idx, "I_DSTCHAN", ch_value)
 
@@ -298,7 +317,8 @@ class TrackSoundscapeDJManager:
     def __UpdateAudioPosition(self, soundUUID: UUID, position_angles: tuple, distanceRadius: float):
         soundTrack = self.__FindTrackByUUID(soundUUID)
         if soundTrack is None:
-            raise ValueError(f"SoundTrack with UUID {soundUUID} not found")
+            self.__logger.warning(f"source_position received for unknown UUID {soundUUID}")
+            return False
         
         if not soundTrack.ambisonic:
             # Update Sparta plugin source position
@@ -317,6 +337,7 @@ class TrackSoundscapeDJManager:
 
         #unmute track
         #soundTrack.Track.unmute()
+        return True
 
     def __CalculateDistanceDB(self, distanceRadius: float) -> float:
         # Inverse square law: 0dB at 1m reference, -6dB per doubling of distance
@@ -337,13 +358,14 @@ class TrackSoundscapeDJManager:
             return
 
         self.__DeleteSoundTrack(soundTrack)
-
-        self.__NewAudioDurations()
+        #self.__NewAudioDurations()
 
     def __DeleteSoundTrack(self, soundTrack: SoundTrack):
         was_mono = soundTrack.ambiSourceIndex is not None
 
         self.__SoundTracks.remove(soundTrack)
+        if soundTrack in self.__NonLoopSoundtracks:
+            self.__NonLoopSoundtracks.remove(soundTrack)
         soundTrack.Track.delete()
 
         if was_mono:
@@ -370,7 +392,7 @@ class TrackSoundscapeDJManager:
             # Reroute the send to the new destination channel pair
             send = self.__FindSendToTrack(soundTrack.Track, self.__EncoderMono)
             if send is not None:
-                dst_chan = (new_index - 1) * 2
+                dst_chan = new_index - 1
                 RPR.SetTrackSendInfo_Value(
                     soundTrack.Track.id, 0, send.index, "I_DSTCHAN", dst_chan
                 )
@@ -385,10 +407,6 @@ class TrackSoundscapeDJManager:
             if send.dest_track.id == dest_track.id:
                 return send
         return None
-
-    async def __DeleteLoopTrack(self, soundUUID: UUID, audio_time: float):
-        await asyncio.sleep(audio_time)
-        self.__DeleteTrack(soundUUID)
 
     def __muteTrack(self, soundUUID: UUID):
         soundTrack = self.__FindTrackByUUID(soundUUID)
