@@ -27,7 +27,7 @@ class AmbisonicENCoder(AudioPluginController):
 
     __elevation_range = (-90,90)
 
-    def __init__(self,TrackFX: reapy.FX,Sources: int, ambisonic_order: int = 1,params = _param_defaults):
+    def __init__(self,TrackFX: reapy.FX,Sources: int, invert_azimuth: bool, invert_elev: bool, ambisonic_order: int = 1,params = _param_defaults):
         super().__init__(TrackFX)
         self.Sources = Sources #The number of speakers being used by the ambisonic plugin
         try:
@@ -35,6 +35,8 @@ class AmbisonicENCoder(AudioPluginController):
         except ValueError as e:
             print(e)
         
+        self.__invert_azimuth = invert_azimuth
+        self.__invert_elev = invert_elev
         self._setInitialParams(params)
 
         self.__setOutputOrder(ambisonic_order)
@@ -90,10 +92,14 @@ class AmbisonicENCoder(AudioPluginController):
     '''
         
     def setSpeakerAzim(self,source_number,azim_value):
+        if self.__invert_azimuth:
+            azim_value = -azim_value
         speaker_param_index = (self.__spatial_sound_positions_start_index-1) + (source_number*2)-1
         self.TrackFX.params[speaker_param_index] = self._param_val_calc(azim_value,self.__azim_range[0],self.__azim_range[1])
     
     def setSpeakerElevation(self,source_number,elevation_value):
+        if self.__invert_elev:
+            elevation_value = -elevation_value
         speaker_param_index = (self.__spatial_sound_positions_start_index-1) + (source_number*2)
         self.TrackFX.params[speaker_param_index] = self._param_val_calc(elevation_value,self.__elevation_range[0],self.__elevation_range[1])
 

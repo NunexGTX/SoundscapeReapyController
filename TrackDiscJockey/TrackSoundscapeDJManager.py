@@ -41,7 +41,8 @@ class TrackSoundscapeDJManager:
 
         self.__MonoAudiosCounter = 0
         self.__AmbisonicOrder = reapy_controller_config.AmbisonicOrder
-        self.__AmbiENC = AmbisonicENCoder(self.__EncoderMono.fxs[AmbisonicENCoder.plugin_name],1,self.__AmbisonicOrder)
+        self.__AmbiENC = AmbisonicENCoder(self.__EncoderMono.fxs[AmbisonicENCoder.plugin_name],1,
+                                          reapy_controller_config.InvertAzimuth,reapy_controller_config.InvertElevation,self.__AmbisonicOrder)
         self.__AmbiDEC = AmbisonicDECoder(self.__DecoderAmbisonic.fxs[AmbisonicDECoder.plugin_name],self.__AmbisonicOrder)
         self.__AmbiBIN = AmbisonicBINaural(self.__DecoderBinaural.fxs[AmbisonicBINaural.plugin_name],self.__AmbisonicOrder)
 
@@ -116,6 +117,10 @@ class TrackSoundscapeDJManager:
         elif command == "start_soundscape":
             self.__StartSoundscape()
             return "Soundscape has started"
+        
+        elif command == "no_start_wait":
+            self.__SoundscapePlaying = True
+            return "Skipped waiting for soundscape start message"
 
         elif command == "end_soundscape":
             self.__EndSoundscape()
@@ -187,11 +192,17 @@ class TrackSoundscapeDJManager:
             self.__nonloop_timer = None
         for soundTrack in list(self.__SoundTracks):
             self.__DeleteSoundTrack(soundTrack)
+
+        self.__soundscapeTime = 0
         self.__SoundscapePlaying = False
+
         self.__project.stop()
         self.__NewAudioDurations()
 
     def __NewTrack(self,audioID: str, soundUUID: UUID, volume: float, loop: bool, delay: int, redo_track = True):
+        if self.__CurrentMaxAudioDuration == 0.0:
+            self.__logger.warning("new_track received before new_soundscape; track not created")
+            return
         #Check if that specific sound with that UUID already exists. This will early return the function but try to make sure this command isn't received
         if self.__FindTrackByUUID(soundUUID):
             if redo_track:
@@ -264,7 +275,9 @@ class TrackSoundscapeDJManager:
             self.__NonLoopSoundtracks.clear()
 
     def __NewAudioDurations(self):
-        if self.__soundscapeInfinite == True:
+        if self.__soundscapeTime == 0:
+            self.__CurrentMaxAudioDuration = 0
+        elif self.__soundscapeInfinite == True:
             self.__CurrentMaxAudioDuration = self.__soundscapeInfiniteLimit
         else: 
             self.__CurrentMaxAudioDuration = self.__soundscapeTime
