@@ -54,7 +54,6 @@ class TrackSoundscapeDJManager:
         self.__soundscapeInfinite = False
         self.__soundscapeInfiniteLimit = reapy_controller_config.MaxInfiniteSoundscapeMinutesTime
         self.__SoundscapePlaying = False
-        self.__SoundscapeEditMode = False
         self.__lock = threading.Lock()
         self.__nonloop_timer: threading.Timer | None = None
 
@@ -133,7 +132,7 @@ class TrackSoundscapeDJManager:
                 audioID = message["AudioID"]
                 self.__logger.error(f"ERROR: The audio track with id {audioID} has no valid audio file in the sounds folder.")
                 return "Track was not created successfully in Reaper. Reason: The audio file is not available in SoundscapeVReapy Controller"
-            return "Track Created in Reaper"
+            return "track_created" #messages that have to be interpreted are not supposed to have spaces
 
         elif command == "source_position":
             uuid = UUID(message["SoundUUID"])
@@ -170,9 +169,10 @@ class TrackSoundscapeDJManager:
         self.__soundscapeLoop = loop
         self.__soundscapeTime = duration_seconds
         self.__soundscapeInfinite = False
+        self.__SoundscapePlaying = False
         if duration_seconds == 0:
             self.__soundscapeInfinite = True
-        
+
         self.__NewAudioDurations()
         #self.__project.play()
 
@@ -201,7 +201,7 @@ class TrackSoundscapeDJManager:
 
     def __NewTrack(self,audioID: str, soundUUID: UUID, volume: float, loop: bool, delay: int, redo_track = True):
         if self.__CurrentMaxAudioDuration == 0.0:
-            self.__logger.warning("new_track received before new_soundscape; track not created")
+            self.__logger.warning("new_track received before new_soundscape, track not created")
             return
         #Check if that specific sound with that UUID already exists. This will early return the function but try to make sure this command isn't received
         if self.__FindTrackByUUID(soundUUID):
@@ -212,11 +212,6 @@ class TrackSoundscapeDJManager:
                 self.__logger.warning("A command to create a new track that already exists has been ignored")
                 return
 
-        #Cursor in 0 to insert the audio and paused
-        self.__project.cursor_position = delay
-        self.__project.pause()
-        self.__project.unselect_all_tracks()
-        self.__TrackSelectAddNewNext.select()
         #Create a new track with soundtrack class instance and add it to the list
         audioTrackInfo = self.__audiosData.GetAudioFileInfo(audioID) #Prepare the audio's info and check if audio is available
         try:
@@ -224,15 +219,29 @@ class TrackSoundscapeDJManager:
         except FileNotFoundError:
             raise
 
-        RPR.InsertMedia(audioPath,1) #creates a track which its name is the same as the sound file name #Make the track with the audio file
-        #Get current first track (it should be the new one)
-        trackName = str(Path(audioTrackInfo.fileName).stem)
-        newTrack = self.__project.tracks[trackName]
+        with reapy.inside_reaper():
+            #Cursor in 0 to insert the audio and paused
+            self.__project.cursor_position = delay
+            self.__project.pause()
+            self.__project.unselect_all_tracks()
+            self.__TrackSelectAddNewNext.select()
 
-        newTrack.mute() #Avoid pop
+            existing_track_ids = {t.id for t in self.__project.tracks}
+            RPR.InsertMedia(audioPath,1) #creates a track which its name is the same as the sound file name #Make the track with the audio file
+            newTrack = next(t for t in self.__project.tracks if t.id not in existing_track_ids)
 
-        self.__Set_Track_Channels(newTrack,audioTrackInfo.ambisonic)
-        ambi_source_index = self.__SetTrackRedirect(newTrack,audioTrackInfo.ambisonic)
+            newTrack.mute() #Avoid pop
+
+            self.__Set_Track_Channels(newTrack,audioTrackInfo.ambisonic)
+            ambi_source_index = self.__SetTrackRedirect(newTrack,audioTrackInfo.ambisonic)
+
+            if loop:
+                item = newTrack.items[0]
+                RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
+                item.length = self.__CurrentMaxAudioDuration
+
+            self.__project.cursor_position = 0 #Get cursor back to 0
+            self.__project.pause()
 
         soundTrack = SoundTrack(audioTrackInfo,soundUUID, newTrack,delay, loop)
         soundTrack.ambiSourceIndex = ambi_source_index
@@ -242,14 +251,9 @@ class TrackSoundscapeDJManager:
 
         if not loop and self.__soundscapeLoop == False: #If the audio isnt even supposed to repeat, we have to avoid it being replayed after the project loops
             self.__SetNonLoopTrackDeactivation(soundTrack)
-            #asyncio.create_task(self.__DeleteLoopTrack(soundUUID, soundTrack.audio_duration_seconds+delay))
-        elif loop:
-            item = soundTrack.Track.items[0]
-            RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
-            item.length = self.__CurrentMaxAudioDuration
 
-        self.__project.cursor_position = 0 #Get cursor back to 0
         if self.__SoundscapePlaying:
+            print(f"SoundscapePlaying: {self.__SoundscapePlaying}")
             self.__StartSoundscape()
 
     def __get_audio_path(self,audioTrackInfo: AudioData):
@@ -379,16 +383,18 @@ class TrackSoundscapeDJManager:
         self.__SoundTracks.remove(soundTrack)
         if soundTrack in self.__NonLoopSoundtracks:
             self.__NonLoopSoundtracks.remove(soundTrack)
-        soundTrack.Track.delete()
 
-        if was_mono:
-            self.__MonoAudiosCounter -= 1
-            # Compact remaining mono sources to fill the gap
-            self.__ReallocateMonoSources()
-            # Update Sparta source count after reallocation
-            self.__AmbiENC.setNumSources(max(self.__MonoAudiosCounter, 1))
-            # Shrink encoder track channels accordingly, but do not go initially set number
-            self.__EncoderMono.set_info_value("I_NCHAN", max(self.__MonoAudiosCounter * 2, self.__InitTrackCount))
+        with reapy.inside_reaper():
+            soundTrack.Track.delete()
+
+            if was_mono:
+                self.__MonoAudiosCounter -= 1
+                # Compact remaining mono sources to fill the gap
+                self.__ReallocateMonoSources()
+                # Update Sparta source count after reallocation
+                self.__AmbiENC.setNumSources(max(self.__MonoAudiosCounter, 1))
+                # Shrink encoder track channels accordingly, but do not go initially set number
+                self.__EncoderMono.set_info_value("I_NCHAN", max(self.__MonoAudiosCounter * 2, self.__InitTrackCount))
         
 
     def __ReallocateMonoSources(self):

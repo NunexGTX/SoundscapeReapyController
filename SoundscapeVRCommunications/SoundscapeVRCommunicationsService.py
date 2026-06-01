@@ -61,7 +61,7 @@ class SoundscapeVRCommunicationsService:
 
         loop = asyncio.get_event_loop()
         try:
-            encoded = (response + '\n').encode('utf-8')
+            encoded = (response).encode('utf-8')
             await loop.run_in_executor(
                 None,
                 lambda: self.__client_socket.sendall(encoded)
