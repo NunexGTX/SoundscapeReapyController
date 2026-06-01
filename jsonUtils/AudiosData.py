@@ -22,7 +22,10 @@ class AudiosData(jsonDealer):
                 sounds = audios_data["sounds"]  # read the dictionary in the sounds array
                 for sound in sounds:
                     ambisonic = True if sound["type"] == self.__ambisonic_type_name else False
-                    audioData = AudioData(sound["id"],sound["name"],ambisonic,sound["fileName"])
+                    if ambisonic:
+                        audioData = AudioData(sound["id"],sound["name"],ambisonic,sound["ambisonicAssetName"])
+                    else:
+                        audioData = AudioData(sound["id"],sound["name"],ambisonic,sound["fileName"])
                     self.AudiosInfo.append(audioData)
             else:
                 print("Warning: sounds.json doesn't seem to have sound entries")

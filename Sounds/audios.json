@@ -9,6 +9,24 @@
             "imagePath": "wplace goldshit.png"
         },
         {
+            "id": "beach_people",
+            "name": "Beach with People",
+            "fileName": "ambisonicbeach",
+            "fileType": "wav",
+            "type": "ambisonic",
+            "imagePath": "",
+            "ambisonicAssetName": "ambisonic beach with people.wav"
+        },
+        {
+            "id": "r80",
+            "name": "R80 Ambisonic Audio",
+            "fileName": "r80",
+            "fileType": "wav",
+            "type": "ambisonic",
+            "imagePath": "",
+            "ambisonicAssetName": "R80.wav"
+        },
+        {
             "id": "bird_chirp",
             "name": "Bird Chirps",
             "fileName": "bird_chirp.wav",
@@ -17,20 +35,21 @@
             "imagePath": "person.jpg"
         },
         {
-            "id": "beach_people",
-            "name": "Beach with People",
-            "fileName": "ambisonic beach with people.wav",
+            "id": "winds_special",
+            "name": "Special Winds",
+            "fileName": "ambisonic winds.wav",
             "fileType": "wav",
-            "type": "ambisonic",
-            "imagePath": ""
+            "type": "standard",
+            "imagePath": "person.jpg"
         },
         {
             "id": "ambisonic_birds",
             "name": "Ambisonic Birds",
-            "fileName": "ambisonic birds.wav",
+            "fileName": "ambisonicbirds",
             "fileType": "wav",
             "type": "ambisonic",
-            "imagePath": "birds.png"
+            "imagePath": "birds.png",
+            "ambisonicAssetName": "ambisonic birds"
         },
         {
             "id": "backrooms_light",
