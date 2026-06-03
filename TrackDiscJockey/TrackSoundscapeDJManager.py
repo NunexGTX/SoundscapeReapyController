@@ -222,7 +222,7 @@ class TrackSoundscapeDJManager:
         with reapy.inside_reaper():
             #Cursor in 0 to insert the audio and paused
             self.__project.cursor_position = delay
-            self.__project.pause()
+            self.__project.stop()
             self.__project.unselect_all_tracks()
             self.__TrackSelectAddNewNext.select()
 
@@ -232,16 +232,15 @@ class TrackSoundscapeDJManager:
 
             newTrack.mute() #Avoid pop
 
-            self.__Set_Track_Channels(newTrack,audioTrackInfo.ambisonic)
-            ambi_source_index = self.__SetTrackRedirect(newTrack,audioTrackInfo.ambisonic)
-
             if loop:
                 item = newTrack.items[0]
                 RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
                 item.length = self.__CurrentMaxAudioDuration
 
-            self.__project.cursor_position = 0 #Get cursor back to 0
-            self.__project.pause()
+                self.__project.cursor_position = 0 #Get cursor back to 0
+
+        self.__Set_Track_Channels(newTrack,audioTrackInfo.ambisonic)
+        ambi_source_index = self.__SetTrackRedirect(newTrack,audioTrackInfo.ambisonic)
 
         soundTrack = SoundTrack(audioTrackInfo,soundUUID, newTrack,delay, loop)
         soundTrack.ambiSourceIndex = ambi_source_index
@@ -253,7 +252,6 @@ class TrackSoundscapeDJManager:
             self.__SetNonLoopTrackDeactivation(soundTrack)
 
         if self.__SoundscapePlaying:
-            print(f"SoundscapePlaying: {self.__SoundscapePlaying}")
             self.__StartSoundscape()
 
     def __get_audio_path(self,audioTrackInfo: AudioData):
@@ -279,11 +277,9 @@ class TrackSoundscapeDJManager:
             self.__NonLoopSoundtracks.clear()
 
     def __NewAudioDurations(self):
-        if self.__soundscapeTime == 0:
-            self.__CurrentMaxAudioDuration = 0
-        elif self.__soundscapeInfinite == True:
+        if self.__soundscapeInfinite == True:
             self.__CurrentMaxAudioDuration = self.__soundscapeInfiniteLimit
-        else: 
+        else:
             self.__CurrentMaxAudioDuration = self.__soundscapeTime
 
         self.__ReaperTimeSelection._set_start_end(0, self.__CurrentMaxAudioDuration)
@@ -301,7 +297,7 @@ class TrackSoundscapeDJManager:
     def __SetNormalTrackEncoderRedirect(self,source_track: reapy.Track):
         #First set the new receive count in the encoder
         self.__MonoAudiosCounter += 1
-        self.__AmbiENC.setNumSources(self.__MonoAudiosCounter)
+        self.__AmbiENC.setNumSources(self.__MonoAudiosCounter+1)
 
         send = source_track.add_send(self.__EncoderMono)
 
