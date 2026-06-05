@@ -64,6 +64,11 @@ class TrackSoundscapeDJManager:
             #TODO: change according to unity's id
         }
 
+        #Set project sample rate
+        self.__sample_rate = 96000
+        RPR.GetSetProjectInfo(project.id, "PROJECT_SRATE_USE", 1.0, True)
+        RPR.GetSetProjectInfo(project.id, "PROJECT_SRATE", self.__sample_rate, True)
+
         #Initial config commands
         self.__ReaperTimeSelection.loop()
         self.__AmbiENC.setNumSources(1)
