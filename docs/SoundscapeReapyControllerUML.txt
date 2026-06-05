@@ -1,5 +1,9 @@
 @startuml
 
+' ─────────────────────────────────────────────
+'  Class Definitions (grouped by package)
+' ─────────────────────────────────────────────
+
 class SoundscapeVReapy{
     -config: SoundscapeReapyControllerConfig
     -project: reapy.Project
@@ -31,6 +35,7 @@ package TrackDiscJockey{
         -__CurrentMaxAudioDuration: float
         -__MonoAudiosCounter: int
         -__AmbisonicOrder: int
+        -__sample_rate: int
         -__availableSoundEffects: dict
         +Playing: bool
         +TrackSoundscapeDJManager(project: Project, reapyControllerConfig: SoundscapeReapyControllerConfig)
@@ -83,11 +88,7 @@ package TrackDiscJockey{
         +newSoundEffect(soundFX: SoundEffect)
         +deleteSoundEffect(soundFX: SoundEffect)
     }
-
-    TrackSoundscapeDJManager *-- SoundTrack
 }
-
-SoundscapeVReapy *-- TrackSoundscapeDJManager
 
 package jsonUtils{
     abstract class jsonDealer{
@@ -116,17 +117,12 @@ package jsonUtils{
         -_apply_config()
     }
 
-    TrackSoundscapeDJManager o-- SoundscapeReapyControllerConfig
-    SoundscapeReapyControllerConfig <|-- jsonDealer
-
     class AudiosData{
         +AudiosInfo: list
         +AudiosData(reapy_config: SoundscapeReapyControllerConfig)
         #_ReadJson()
         +GetAudioFileInfo(id: str): AudioData
     }
-    AudiosData <|-- jsonDealer
-    SoundTrack *-- AudioData
 
     class AudioData{
         +sound_id: str
@@ -134,13 +130,6 @@ package jsonUtils{
         +ambisonic: bool
         +fileName: str
     }
-
-    AudiosData ..> AudioData
-    TrackSoundscapeDJManager *-- AudiosData
-
-    SoundscapeVReapy *-- SoundscapeReapyControllerConfig
-    SoundscapeVRCommunicationService o-- SoundscapeReapyControllerConfig
-    SoundTrack o-- SoundscapeReapyControllerConfig
 }
 
 package SoundscapeVRCommunications{
@@ -163,8 +152,6 @@ package SoundscapeVRCommunications{
     }
 }
 
-SoundscapeVReapy *-- SoundscapeVRCommunicationService
-
 package AudioPlugins{
     abstract class AudioPluginController{
         +sliderVals: tuple
@@ -176,6 +163,29 @@ package AudioPlugins{
         {abstract}#_setInitialParams(params: list)
         #_param_val_calc(x, min_val, max_val): float
         #_param_double_val_calc(x, min_val, max_val): float
+        +preset_load(rpl_path: str, preset_name: str, path_map: dict)
+        -{static}_parse_rpl(rpl_path: str): dict
+        -{static}_extract_fileldr_paths(chunk_bytes: bytes): list
+        -{static}_patch_xml_path(chunk_bytes: bytes, new_path: str): bytes
+        -{static}_read_rir_chunk(rpl_path: str, preset_name: str): bytes
+        -{static}_patch_fileldr_paths(chunk_bytes: bytes, path_map: dict): bytes
+    }
+
+    abstract class RiReverbs{
+        -_RIR_DIR: Path
+        -_RIR_MAP: dict
+        -_SUBDIRS: dict
+        -_ambisonic: bool
+        +effectParamsList: dict
+        +RiReverbs(TrackFX: FX, rir_preset: str, ambisonic: bool, params: list)
+        #_checkInitialParams(params: list)
+        #_setInitialParams(params: list)
+        +updateSoundEffectParams(params: list)
+        +setApplyReverb(enabled: bool)
+        -{abstract}_patch_chunk_paths(chunk_bytes: bytes, path_map: dict): bytes
+        -{abstract}_load_rir_preset(rir_preset: str)
+        -_get_rir_path(rir_preset: str): Path
+        +{static}create(ambisonic: bool, TrackFX: FX, rir_preset: str, params: list): RiReverbs
     }
 
     package SoundEffects{
@@ -185,8 +195,6 @@ package AudioPlugins{
             +add_to_track(track: Track): SoundEffect
             +remove_from_track()
         }
-
-        SoundEffect <|-- AudioPluginController
 
         class Echo{
             +plugin_name: str
@@ -199,8 +207,6 @@ package AudioPlugins{
             +setDryMix(value: float)
             +setWetMix(value: float)
         }
-
-        Echo <|-- SoundEffect
 
         class Occlusion{
             +plugin_name: str
@@ -220,8 +226,6 @@ package AudioPlugins{
             +setHighFreq(value: float)
         }
 
-        Occlusion <|-- SoundEffect
-
         class HighLowPassFilter{
             +plugin_name: str
             +effectParamsList: dict
@@ -234,15 +238,17 @@ package AudioPlugins{
             +setLowPassFreq(freq: float)
         }
 
-        HighLowPassFilter <|-- SoundEffect
+        class ReverbRIR{
+            +plugin_name: str
+            -_PRESET_NAME: str
+            -_PRESET_FILE: Path
+            +ReverbRIR(TrackFX: FX, rir_preset: str, ambisonic: bool, params: list)
+            #_patch_chunk_paths(chunk_bytes: bytes, path_map: dict): bytes
+            #_load_rir_preset(rir_preset: str)
+        }
     }
 
-    TrackSoundscapeDJManager *-- Echo
-    TrackSoundscapeDJManager *-- Occlusion
-    TrackSoundscapeDJManager *-- HighLowPassFilter
-
     package Sparta{
-
         class AmbisonicENCoder{
             -__outputOrder_range: tuple
             -__ChannelOrderVals: dict
@@ -268,8 +274,6 @@ package AudioPlugins{
             -__check_elevation_value(elevation_val: float)
         }
 
-        AmbisonicENCoder <|-- AudioPluginController
-
         class AmbisonicDECoder{
             -__inputOrder_range: tuple
             +AmbisonicDECoder(TrackFX: FX, ambisonic_order: int)
@@ -277,8 +281,6 @@ package AudioPlugins{
             #_setInitialParams(params: list)
             -__setInputOrder(inputOrder_val: int)
         }
-
-        AmbisonicDECoder <|-- AudioPluginController
 
         class AmbisonicBINaural{
             -__inputOrder_range: tuple
@@ -288,11 +290,83 @@ package AudioPlugins{
             -__setInputOrder(inputOrder_val: int)
         }
 
-        AmbisonicBINaural <|-- AudioPluginController
+        class MultiConvReverb{
+            +plugin_name: str
+            -_PRESET_NAME: str
+            -_PRESET_FILE: Path
+            +MultiConvReverb(TrackFX: FX, rir_preset: str, ambisonic: bool, params: list)
+            #_patch_chunk_paths(chunk_bytes: bytes, path_map: dict): bytes
+            #_load_rir_preset(rir_preset: str)
+        }
+    }
+}
+
+package ReapyUtils{
+    class Tracks{
+        +showProjectTracks(project: Project)
+        +getTrack_byName(project: Project, track_name: str): Track
+        +getTrack_byIndex(project: Project, idx: int): Track
+        +getMasterTrack(project: Project): Track
     }
 
-    TrackSoundscapeDJManager *-- AmbisonicENCoder
-    TrackSoundscapeDJManager *-- AmbisonicDECoder
-    TrackSoundscapeDJManager *-- AmbisonicBINaural
+    class Volume{
+        +dBToLinear(db: float): float
+    }
+
+    class FX{
+        +getFX_byName(project: Project, plugin_name: str, track: Track): FX
+        +getFX_byIndex(project: Project, plugin_index: int, track: Track): FX
+    }
 }
+
+' ─────────────────────────────────────────────
+'  Relationships (all outside package blocks
+'  to avoid PlantUML ghost-class duplication)
+' ─────────────────────────────────────────────
+
+' SoundscapeVReapy
+SoundscapeVReapy *-- TrackSoundscapeDJManager
+SoundscapeVReapy *-- SoundscapeVRCommunicationService
+SoundscapeVReapy *-- SoundscapeReapyControllerConfig
+
+' TrackDiscJockey
+TrackSoundscapeDJManager *-- SoundTrack
+TrackSoundscapeDJManager o-- SoundscapeReapyControllerConfig
+TrackSoundscapeDJManager *-- AudiosData
+TrackSoundscapeDJManager *-- AmbisonicENCoder
+TrackSoundscapeDJManager *-- AmbisonicDECoder
+TrackSoundscapeDJManager *-- AmbisonicBINaural
+TrackSoundscapeDJManager *-- Echo
+TrackSoundscapeDJManager *-- Occlusion
+TrackSoundscapeDJManager *-- HighLowPassFilter
+TrackSoundscapeDJManager *-- ReverbRIR
+TrackSoundscapeDJManager *-- MultiConvReverb
+SoundTrack *-- AudioData
+SoundTrack o-- SoundscapeReapyControllerConfig
+
+' jsonUtils
+SoundscapeReapyControllerConfig <|-- jsonDealer
+AudiosData <|-- jsonDealer
+AudiosData ..> AudioData
+
+' SoundscapeVRCommunications
+SoundscapeVRCommunicationService o-- SoundscapeReapyControllerConfig
+
+' AudioPlugins — inheritance
+SoundEffect <|-- AudioPluginController
+Echo <|-- SoundEffect
+Occlusion <|-- SoundEffect
+HighLowPassFilter <|-- SoundEffect
+ReverbRIR <|-- RiReverbs
+RiReverbs <|-- AudioPluginController
+MultiConvReverb <|-- RiReverbs
+AmbisonicENCoder <|-- AudioPluginController
+AmbisonicDECoder <|-- AudioPluginController
+AmbisonicBINaural <|-- AudioPluginController
+
+' ReapyUtils
+TrackSoundscapeDJManager ..> Tracks
+TrackSoundscapeDJManager ..> Volume
+TrackSoundscapeDJManager ..> FX
+
 @enduml
