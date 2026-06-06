@@ -1,5 +1,5 @@
 import reapy
-from .SoundEffect import SoundEffect
+from ..SoundEffect import SoundEffect
 
 class Echo(SoundEffect):
     plugin_name = "VST: ReaDelay (Cockos)"

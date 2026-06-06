@@ -1,5 +1,5 @@
 import reapy
-from .SoundEffect import SoundEffect
+from ..SoundEffect import SoundEffect
 
 class HighLowPassFilter(SoundEffect):
     plugin_name = "JS: RBJ Highpass/Lowpass Filters"

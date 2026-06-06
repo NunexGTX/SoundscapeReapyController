@@ -1,6 +1,6 @@
 import math
 import reapy
-from .SoundEffect import SoundEffect
+from ..SoundEffect import SoundEffect
 
 class Occlusion(SoundEffect):
     plugin_name = "VST: ReaEQ (Cockos)"

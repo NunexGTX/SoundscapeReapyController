@@ -1,13 +1,13 @@
 import reapy
 from abc import abstractmethod
 from pathlib import Path
-from .AudioPluginController import AudioPluginController
+from .SoundEffect import SoundEffect
 from .SoundEffects.ReverbRIR import ReverbRIR
 from .Sparta.MultiConvReverb import MultiConvReverb
 
-class RiReverbs(AudioPluginController):
+class RiReverbs(SoundEffect):
     _RIR_DIR = Path(__file__).parent / "RiRs"
-    _param_defaults = [False]
+    _param_defaults = [False, False, "Cinema_Room"]  # [apply_reverb, ambisonic, rir_preset]
     effectParamsList = {}
 
     _RIR_MAP = {
@@ -26,22 +26,32 @@ class RiReverbs(AudioPluginController):
         True:  "Ambisonic/1stOrder",
     }
 
-    def __init__(self, TrackFX: reapy.FX, rir_preset: str, ambisonic: bool, params=_param_defaults):
+    def __init__(self, TrackFX: reapy.FX, params=_param_defaults):
         super().__init__(TrackFX)
-        self._ambisonic = ambisonic
         self._checkInitialParams(params)
-        self._load_rir_preset(rir_preset)
-        self._setInitialParams(params)
+        self.updateSoundEffectParams(params)
 
     def _checkInitialParams(self, params):
-        if len(params) != 1 or not isinstance(params[0], bool):
-            raise ValueError("params must be [apply_reverb: bool]")
+        if len(params) != 3:
+            raise ValueError("params must be [apply_reverb: bool, ambisonic: bool, rir_preset: str]")
+        if not isinstance(params[0], bool):
+            raise ValueError(f"apply_reverb must be bool, got {type(params[0])}")
+        if not isinstance(params[1], bool):
+            raise ValueError(f"ambisonic must be bool, got {type(params[1])}")
+        if params[2] not in self._RIR_MAP:
+            raise ValueError(f"Unknown rir_preset '{params[2]}'. Available: {list(self._RIR_MAP)}")
 
     def _setInitialParams(self, params):
         self.updateSoundEffectParams(params)
 
     def updateSoundEffectParams(self, params: list):
-        self.setApplyReverb(params[0])
+        apply_reverb, ambisonic, rir_preset = params
+        self._ambisonic = ambisonic
+        self.setRirPreset(rir_preset)
+        self.setApplyReverb(apply_reverb)
+
+    def setRirPreset(self, rir_preset: str):
+        self._load_rir_preset(rir_preset)
 
     def setApplyReverb(self, enabled: bool):
         self.TrackFX.is_enabled = enabled
@@ -63,6 +73,14 @@ class RiReverbs(AudioPluginController):
         pass
 
     @classmethod
-    def create(cls, ambisonic: bool, TrackFX: reapy.FX, rir_preset: str, params=None):
-        RiReverb = MultiConvReverb if ambisonic else ReverbRIR
-        return RiReverb(TrackFX, rir_preset, ambisonic) if params is None else RiReverb(TrackFX, rir_preset, ambisonic, params)
+    def add_to_track(cls, track: reapy.Track, params=_param_defaults) -> 'RiReverbs':
+        _, ambisonic, _ = params
+        SubClass = MultiConvReverb if ambisonic else ReverbRIR
+        fx = track.add_fx(SubClass.plugin_name)
+        return SubClass(fx, params)
+
+    @classmethod
+    def create(cls, TrackFX: reapy.FX, params=_param_defaults) -> 'RiReverbs':
+        _, ambisonic, _ = params
+        SubClass = MultiConvReverb if ambisonic else ReverbRIR
+        return SubClass(TrackFX, params)

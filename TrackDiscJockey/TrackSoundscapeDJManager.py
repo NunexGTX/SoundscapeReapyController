@@ -17,6 +17,7 @@ from jsonUtils.AudioData import AudioData
 from AudioPlugins.SoundEffects.Echo import Echo
 from AudioPlugins.SoundEffects.Occlusion import Occlusion
 from AudioPlugins.SoundEffects.HighLowPassFilter import HighLowPassFilter
+from AudioPlugins.RiReverbs import RiReverbs
 
 logging.basicConfig(level=logging.INFO)
 
@@ -60,8 +61,8 @@ class TrackSoundscapeDJManager:
         self.__availableSoundEffects = {
             "echo": Echo,
             "occlusion": Occlusion,
-            "highLowPass": HighLowPassFilter 
-            #TODO: change according to unity's id
+            "highLowPass": HighLowPassFilter,
+            "reverb": RiReverbs
         }
 
         #Set project sample rate
@@ -445,8 +446,7 @@ class TrackSoundscapeDJManager:
             if effectClass is None:
                 self.__logger.warning("A sound effect not yet implemented was attempted to be added to the track")
                 return
-            newEffect = effectClass.add_to_track(soundTrack.Track)
-            newEffect.updateSoundEffectParams(effectParams)
+            newEffect = effectClass.add_to_track(soundTrack.Track, effectParams)
 
             #Add to soundtrack
             soundTrack.newSoundEffect(newEffect)
