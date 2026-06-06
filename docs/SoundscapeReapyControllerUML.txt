@@ -171,30 +171,33 @@ package AudioPlugins{
         -{static}_patch_fileldr_paths(chunk_bytes: bytes, path_map: dict): bytes
     }
 
+    abstract class SoundEffect{
+        +effectParamsList: dict
+        {abstract}+updateSoundEffectParams(params: list)
+        +add_to_track(track: Track, initial_params: list): SoundEffect
+        +remove_from_track()
+    }
+
     abstract class RiReverbs{
         -_RIR_DIR: Path
         -_RIR_MAP: dict
         -_SUBDIRS: dict
         -_ambisonic: bool
         +effectParamsList: dict
-        +RiReverbs(TrackFX: FX, rir_preset: str, ambisonic: bool, params: list)
+        +RiReverbs(TrackFX: FX, params: list)
         #_checkInitialParams(params: list)
         #_setInitialParams(params: list)
         +updateSoundEffectParams(params: list)
         +setApplyReverb(enabled: bool)
+        +setRirPreset(rir_preset: str)
         -{abstract}_patch_chunk_paths(chunk_bytes: bytes, path_map: dict): bytes
         -{abstract}_load_rir_preset(rir_preset: str)
         -_get_rir_path(rir_preset: str): Path
-        +{static}create(ambisonic: bool, TrackFX: FX, rir_preset: str, params: list): RiReverbs
+        +{static}add_to_track(track: Track, params: list): RiReverbs
+        +{static}create(TrackFX: FX, params: list): RiReverbs
     }
 
     package SoundEffects{
-        abstract class SoundEffect{
-            +effectParamsList: dict
-            {abstract}+updateSoundEffectParams(params: list)
-            +add_to_track(track: Track): SoundEffect
-            +remove_from_track()
-        }
 
         class Echo{
             +plugin_name: str
@@ -242,7 +245,7 @@ package AudioPlugins{
             +plugin_name: str
             -_PRESET_NAME: str
             -_PRESET_FILE: Path
-            +ReverbRIR(TrackFX: FX, rir_preset: str, ambisonic: bool, params: list)
+            +ReverbRIR(TrackFX: FX, params: list)
             #_patch_chunk_paths(chunk_bytes: bytes, path_map: dict): bytes
             #_load_rir_preset(rir_preset: str)
         }
@@ -294,7 +297,7 @@ package AudioPlugins{
             +plugin_name: str
             -_PRESET_NAME: str
             -_PRESET_FILE: Path
-            +MultiConvReverb(TrackFX: FX, rir_preset: str, ambisonic: bool, params: list)
+            +MultiConvReverb(TrackFX: FX, params: list)
             #_patch_chunk_paths(chunk_bytes: bytes, path_map: dict): bytes
             #_load_rir_preset(rir_preset: str)
         }
@@ -339,8 +342,7 @@ TrackSoundscapeDJManager *-- AmbisonicBINaural
 TrackSoundscapeDJManager *-- Echo
 TrackSoundscapeDJManager *-- Occlusion
 TrackSoundscapeDJManager *-- HighLowPassFilter
-TrackSoundscapeDJManager *-- ReverbRIR
-TrackSoundscapeDJManager *-- MultiConvReverb
+TrackSoundscapeDJManager *-- RiReverbs
 SoundTrack *-- AudioData
 SoundTrack o-- SoundscapeReapyControllerConfig
 
@@ -358,7 +360,7 @@ Echo <|-- SoundEffect
 Occlusion <|-- SoundEffect
 HighLowPassFilter <|-- SoundEffect
 ReverbRIR <|-- RiReverbs
-RiReverbs <|-- AudioPluginController
+RiReverbs <|-- SoundEffect
 MultiConvReverb <|-- RiReverbs
 AmbisonicENCoder <|-- AudioPluginController
 AmbisonicDECoder <|-- AudioPluginController
