@@ -49,7 +49,7 @@
             "fileType": "wav",
             "type": "ambisonic",
             "imagePath": "birds.png",
-            "ambisonicAssetName": "ambisonic birds"
+            "ambisonicAssetName": "ambisonic birds.wav"
         },
         {
             "id": "backrooms_light",

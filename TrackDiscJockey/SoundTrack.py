@@ -1,5 +1,5 @@
 from reapy import Track
-from AudioPlugins.SoundEffects.SoundEffect import SoundEffect
+from AudioPlugins.SoundEffect import SoundEffect
 import mutagen #To get audio file time
 from jsonUtils.AudioData import AudioData
 from uuid import UUID

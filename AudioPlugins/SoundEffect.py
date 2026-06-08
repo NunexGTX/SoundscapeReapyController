@@ -1,12 +1,13 @@
 from abc import abstractmethod
-import reapy
+#from TrackDiscJockey.SoundTrack import SoundTrack #Avoid circular import, it was only used for a variable type check
 from .AudioPluginController import AudioPluginController
 
 class SoundEffect(AudioPluginController):
     effectParamsList = None  # subclasses must declare this dict
 
     @classmethod
-    def add_to_track(cls, track: reapy.Track, initial_params: list = None) -> 'SoundEffect':
+    def add_to_track(cls, soundtrack, initial_params: list = None) -> 'SoundEffect':
+        track = soundtrack.Track
         fx = track.add_fx(cls.plugin_name)
         return cls(fx, initial_params)
 

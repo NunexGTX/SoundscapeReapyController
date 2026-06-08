@@ -23,9 +23,7 @@ class HighLowPassFilter(SoundEffect):
         self._setInitialParams(params)
 
     def _checkInitialParams(self, params):
-        apply_filter = params[0]
-        if not isinstance(apply_filter, bool):
-            raise ValueError(f"apply_filter must be bool, got {type(apply_filter)}")
+        pass
 
     def _setInitialParams(self, params):
         self.updateSoundEffectParams(params)
@@ -44,11 +42,9 @@ class HighLowPassFilter(SoundEffect):
     def setHighPassFreq(self, freq: float):
         freq = max(0.0, min(freq, 1000.0))
         self._hp_freq = freq
-        if self._hp_active:
-            self.TrackFX.params[0] = freq
+        self.TrackFX.params[0] = freq
 
     def setLowPassFreq(self, freq: float):
         freq = max(1000.0, min(freq, 22000.0))
         self._lp_freq = freq
-        if self._lp_active:
-            self.TrackFX.params[1] = freq
+        self.TrackFX.params[1] = freq

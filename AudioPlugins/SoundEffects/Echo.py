@@ -25,15 +25,13 @@ class Echo(SoundEffect):
 
     def _checkInitialParams(self, params):
         apply_echo, delay_ms, decay_ratio, dry_mix, wet_mix = params
-        if not isinstance(apply_echo, bool):
-            raise ValueError(f"apply_echo must be bool, got {type(apply_echo)}")
-        if not 0 <= delay_ms <= 2000:
+        if not 0 <= float(delay_ms) <= 2000:
             raise ValueError(f"delay_ms must be 0–2000, got {delay_ms}")
-        if not 0.0 <= decay_ratio <= 1.0:
+        if not 0.0 <= float(decay_ratio) <= 1.0:
             raise ValueError(f"decay_ratio must be 0.0–1.0, got {decay_ratio}")
-        if not 0.0 <= dry_mix <= 1.0:
+        if not 0.0 <= float(dry_mix) <= 1.0:
             raise ValueError(f"dry_mix must be 0.0–1.0, got {dry_mix}")
-        if not 0.0 <= wet_mix <= 1.0:
+        if not 0.0 <= float(wet_mix) <= 1.0:
             raise ValueError(f"wet_mix must be 0.0–1.0, got {wet_mix}")
 
     def _setInitialParams(self, params):

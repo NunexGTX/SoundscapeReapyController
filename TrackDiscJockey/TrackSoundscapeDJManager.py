@@ -61,7 +61,7 @@ class TrackSoundscapeDJManager:
         self.__availableSoundEffects = {
             "echo": Echo,
             "occlusion": Occlusion,
-            "highLowPass": HighLowPassFilter,
+            "pass": HighLowPassFilter,
             "reverb": RiReverbs
         }
 
@@ -446,7 +446,7 @@ class TrackSoundscapeDJManager:
             if effectClass is None:
                 self.__logger.warning("A sound effect not yet implemented was attempted to be added to the track")
                 return
-            newEffect = effectClass.add_to_track(soundTrack.Track, effectParams)
+            newEffect = effectClass.add_to_track(soundTrack, effectParams)
 
             #Add to soundtrack
             soundTrack.newSoundEffect(newEffect)

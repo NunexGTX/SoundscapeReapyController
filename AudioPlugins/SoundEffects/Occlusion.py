@@ -36,12 +36,8 @@ class Occlusion(SoundEffect):
 
     def _checkInitialParams(self, params):
         apply_occ, freq_dep, general, low, mid, high = params
-        if not isinstance(apply_occ, bool):
-            raise ValueError(f"apply_occlusion must be bool, got {type(apply_occ)}")
-        if not isinstance(freq_dep, bool):
-            raise ValueError(f"frequency_dependent must be bool, got {type(freq_dep)}")
         for name, val in [("general_occlusion", general), ("low_freq", low), ("mid_freq", mid), ("high_freq", high)]:
-            if not 0.0 <= val <= 1.0:
+            if not 0.0 <= float(val) <= 1.0:
                 raise ValueError(f"{name} must be 0.0–1.0, got {val}")
 
     def _log_freq_normalize(self, freq: float) -> float:
