@@ -7,7 +7,7 @@ from .SoundEffect import SoundEffect
 
 class RiReverbs(SoundEffect):
     #_RIR_DIR = Path(__file__).parent.parent / "RiRs"
-    _param_defaults = [False, "Cinema_Room"]  # [apply_reverb, ambisonic, rir_preset]
+    _param_defaults = [False, "Cinema_Room"]  # [apply_reverb, rir_preset]
     effectParamsList = {}
 
     _JSON_PATH = Path(__file__).parent.parent / "configs" / "RiReverb.json"

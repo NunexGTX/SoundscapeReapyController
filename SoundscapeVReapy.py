@@ -37,7 +37,7 @@ def check_reaper_running():
     print("Reaper DAW Connection: OK")
 
 def Reset():
-    global project, ReapyManage
+    global project, ReapyManager
     reapy.open_project(config.ReapyTemplateProjectPath)
     project = reapy.Project()
     ReapyManager = TrackSoundscapeDJManager(project, config)

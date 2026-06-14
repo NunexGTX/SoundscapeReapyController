@@ -108,9 +108,12 @@ class TrackSoundscapeDJManager:
         try:
             with self.__lock:
                 return self.__HandleCommand(json.loads(msg))
-        except (json.JSONDecodeError, KeyError) as e:
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
             self.__logger.error(f"Malformed command: {e}")
             return "Invalid Command or Instructions"
+        except Exception as e:
+            self.__logger.error(f"Failed to handle command: {e}")
+            return "Command failed"
 
     def __HandleCommand(self, message: dict) -> str:
         command = message["command"]
@@ -241,7 +244,8 @@ class TrackSoundscapeDJManager:
             if loop:
                 item = newTrack.items[0]
                 RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
-                item.length = self.__CurrentMaxAudioDuration
+                #Item starts at the delay offset, so trim its length to end exactly at the loop boundary
+                item.length = self.__CurrentMaxAudioDuration - delay
 
                 self.__project.cursor_position = 0 #Get cursor back to 0
 
@@ -284,7 +288,7 @@ class TrackSoundscapeDJManager:
 
     def __NewAudioDurations(self):
         if self.__soundscapeInfinite == True:
-            self.__CurrentMaxAudioDuration = self.__soundscapeInfiniteLimit
+            self.__CurrentMaxAudioDuration = self.__soundscapeInfiniteLimit * 60 #config value is in minutes, durations are in seconds
         else:
             self.__CurrentMaxAudioDuration = self.__soundscapeTime
 
@@ -345,9 +349,8 @@ class TrackSoundscapeDJManager:
 
         # Calculate and apply distance attenuation
         volume_db = self.__CalculateDistanceDB(distanceRadius)
-        trackRPR = RPR.GetTrack(0,soundTrack.Track.index)
         linearVolume = self.__db_to_linear(volume_db)*soundTrack.VolumeGain
-        RPR.SetMediaTrackInfo_Value(trackRPR,"D_VOL",linearVolume)
+        RPR.SetMediaTrackInfo_Value(soundTrack.Track.id,"D_VOL",linearVolume)
 
         # Save state on the SoundTrack
         soundTrack.positionalRot = position_angles
@@ -359,7 +362,7 @@ class TrackSoundscapeDJManager:
         return True
 
     def __CalculateDistanceDB(self, distanceRadius: float) -> float:
-        # Inverse square law: 0dB at 1m reference, -6dB per doubling of distance
+        # 0dB at the 1m reference, then -20*log10(distance): -6dB per doubling of distance (every 10x distance is -20dB)
         if distanceRadius <= 0:
             return 0.0
         return -20 * math.log10(max(distanceRadius, 1.0))

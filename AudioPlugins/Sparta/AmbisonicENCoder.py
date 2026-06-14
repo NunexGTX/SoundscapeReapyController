@@ -30,11 +30,8 @@ class AmbisonicENCoder(AudioPluginController):
     def __init__(self,TrackFX: reapy.FX,Sources: int, invert_azimuth: bool, invert_elev: bool, ambisonic_order: int = 1,params = _param_defaults):
         super().__init__(TrackFX)
         self.Sources = Sources #The number of speakers being used by the ambisonic plugin
-        try:
-            self._checkInitialParams(params)
-        except ValueError as e:
-            print(e)
-        
+        self._checkInitialParams(params) #Raises ValueError on invalid params instead of proceeding with bad values
+
         self.__invert_azimuth = invert_azimuth
         self.__invert_elev = invert_elev
         self._setInitialParams(params)
@@ -58,6 +55,7 @@ class AmbisonicENCoder(AudioPluginController):
 
     def setNumSources(self,numSources_val):
         self.TrackFX.params[3] = self._param_val_calc(numSources_val,self.__source_range[0],self.__source_range[1])
+        self.Sources = numSources_val #Keep the cached count in sync with the plugin parameter
     
     '''Setting speaker array positions'''
 
@@ -67,7 +65,7 @@ class AmbisonicENCoder(AudioPluginController):
     But all speaker positions greater than the sources number will be ignored'''
     def SpeakersPositions(self,sources_positions):
         if len(sources_positions) > self.Sources:
-            sources_positions = sources_positions[:self.Sources-1]
+            sources_positions = sources_positions[:self.Sources]
         
         for i in range(len(sources_positions)):
             self.SpeakerPositions(i+1,sources_positions[i])
