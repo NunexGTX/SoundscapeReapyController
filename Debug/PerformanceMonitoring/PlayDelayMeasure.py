@@ -6,10 +6,15 @@ class PlayDelayMeasure:
     print_delay_message = True
     save_to_file = True
     delays_file = "./logs/PlayDelays.csv"
+    clock_offset: int = 0
+
+    @classmethod
+    def set_clock_offset(cls, offset: int):
+        cls.clock_offset = offset
 
     @classmethod
     def measure_delay(self,timestamp):
-        delay_count = max(0, time.time_ns() // 1_000_000 - timestamp)
+        delay_count = time.time_ns() // 1_000_000 - timestamp - PlayDelayMeasure.clock_offset
 
         if PlayDelayMeasure.print_delay_message:
             print(f"Soundscape started with a delay of {delay_count}ms")

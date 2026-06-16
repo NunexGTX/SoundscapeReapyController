@@ -123,7 +123,15 @@ class TrackSoundscapeDJManager:
     def __HandleCommand(self, message: dict) -> str:
         command = message["command"]
 
-        if command == "new_soundscape":
+        if command == "clock_sync":
+            t_rx = time.time_ns() // 1_000_000
+            return f"clock_sync:{t_rx}"
+
+        elif command == "clock_sync_result":
+            PlayDelayMeasure.set_clock_offset(int(message["offset"]))
+            return "clock_sync_result_ok"
+
+        elif command == "new_soundscape":
             self.__NewSoundscape(int(message["Duration"]),bool(message["Loop"]))
             return "New Soundscape started"
 
