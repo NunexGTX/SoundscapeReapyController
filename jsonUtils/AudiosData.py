@@ -23,7 +23,7 @@ class AudiosData(jsonDealer):
                 for sound in sounds:
                     ambisonic = True if sound["type"] == self.__ambisonic_type_name else False
                     if ambisonic:
-                        audioData = AudioData(sound["id"],sound["name"],ambisonic,sound["ambisonicAssetName"])
+                        audioData = AudioData(sound["id"],sound["name"],ambisonic,sound["ambisonicAssetName"]+"."+sound["fileType"])
                     else:
                         audioData = AudioData(sound["id"],sound["name"],ambisonic,sound["fileName"])
                     self.AudiosInfo.append(audioData)

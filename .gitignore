@@ -216,5 +216,8 @@ Sounds/*.{mp3,wav,flac,m4a}
 Backups/
 Media/
 
+#Logs
+logs/
+
 #CLAUDE CODE
 CLAUDE.md

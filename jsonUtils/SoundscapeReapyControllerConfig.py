@@ -21,7 +21,9 @@ class SoundscapeReapyControllerConfig(jsonDealer):
             "InvertElev": False,
             "MaxInfiniteSoundscapeMinutesTime": 40,
             "MuteBinauralDecoder": False,
-            "MuteAmbisonicDecoder": False
+            "MuteAmbisonicDecoder": False,
+            "measure_delay": True,
+            "save_delay_measure": True
         }
 
     def __init__(self):
@@ -72,6 +74,8 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         self.MaxInfiniteSoundscapeMinutesTime = self.__max_inifinite_soundscape_minutes_time()
         self.MuteBinauralDecoder = self.__mute_binaural_decoder()
         self.MuteAmbisonicDecoder = self.__mute_ambisonic_decoder()
+        self.MeasureDelay = self.__measure_delay()
+        self.SaveDelayMeasure = self.__save_delay_measure()
         
     def __reapy_template_project_path(self):
         """Returns the path to the Reapy template project."""
@@ -127,6 +131,12 @@ class SoundscapeReapyControllerConfig(jsonDealer):
     
     def __mute_ambisonic_decoder(self):
         return self.__config["MuteAmbisonicDecoder"]
+    
+    def __measure_delay(self):
+        return bool(self.__config["measure_delay"])
+    
+    def __save_delay_measure(self):
+        return bool(self.__config["save_delay_measure"])
     
 #For Debug
 if __name__ == '__main__':

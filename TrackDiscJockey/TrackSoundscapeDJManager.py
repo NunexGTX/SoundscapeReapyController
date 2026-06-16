@@ -1,9 +1,11 @@
 import reapy
 import math
+import time
 from reapy import reascript_api as RPR
 import json
 import threading
 import logging
+from Debug.PerformanceMonitoring.PlayDelayMeasure import PlayDelayMeasure
 from AudioPlugins.Sparta.AmbisonicENCoder import AmbisonicENCoder
 from AudioPlugins.Sparta.AmbisonicDECoder import AmbisonicDECoder
 from AudioPlugins.Sparta.AmbisonicBinaural import AmbisonicBINaural
@@ -77,6 +79,9 @@ class TrackSoundscapeDJManager:
         self.__setTracksVolumes()
         self.__setDecoderMutes()
 
+        self.measure_delay = reapy_controller_config.MeasureDelay
+        PlayDelayMeasure.save_to_file = reapy_controller_config.SaveDelayMeasure
+
     def __setTracksForAmbisonic(self):
         #Set number of tracks for mono encoder and decoders
         self.__EncoderMono.set_info_value("I_NCHAN", self.__InitTrackCount)
@@ -123,8 +128,8 @@ class TrackSoundscapeDJManager:
             return "New Soundscape started"
 
         elif command == "start_soundscape":
-            self.__StartSoundscape()
-            return "Soundscape has started"
+            self.__StartSoundscape(int(message["timestamp"]))
+            return "soundscape_started"
         
         elif command == "no_start_wait":
             self.__SoundscapePlaying = True
@@ -185,10 +190,14 @@ class TrackSoundscapeDJManager:
         self.__NewAudioDurations()
         #self.__project.play()
 
-    def __StartSoundscape(self):
+    def __StartSoundscape(self, timestamp=None):
         if self.__nonloop_timer:
             self.__nonloop_timer.cancel()
         self.__project.play()
+
+        if self.measure_delay and timestamp is not None:
+            PlayDelayMeasure.measure_delay(timestamp)
+
         self.__SoundscapePlaying = True
         self.__nonloop_timer = threading.Timer(
             self.__CurrentMaxAudioDuration, self.__DeleteTracksAfterLoop
