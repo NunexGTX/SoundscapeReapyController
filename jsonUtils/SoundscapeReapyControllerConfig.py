@@ -11,6 +11,7 @@ class SoundscapeReapyControllerConfig(jsonDealer):
             "ReapyTemplateProjectPath": "{REAPY_CONTROLLER_DIR}/SoundscapeReaper.RPP",
             "SoundsLocation": "{REAPY_CONTROLLER_DIR}/Sounds",
             "SoundscapeVRUnityCommunicationPort": 6337,
+            "LogCommunications": True,
             "EncoderAmbisonicTrackName": "EncoderAmbisonic1stOrderAudio",
             "EncoderMonoAudioTrackName": "EncoderMonoAudio",
             "DecoderAmbisonicTrackName": "DecoderAmbisonic",
@@ -63,6 +64,7 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         self.ReapyTemplateProjectPath = self.__reapy_template_project_path()
         self.SoundsLocation = self.__sounds_location()
         self.SoundscapeVRUnityCommunicationPort = self.__soundscape_vr_unity_communication_port()
+        self.LogCommunications = self.__log_communications()
         self.EncoderMonoAudioTrackName = self.__encoder_mono_audio_track_name()
         self.EncoderAmbisonicTrackName = self.__encoder_ambisonic_track_name()
         self.DecoderAmbisonicTrackName = self.__decoder_ambisonic_track_name()
@@ -96,6 +98,9 @@ class SoundscapeReapyControllerConfig(jsonDealer):
     def __soundscape_vr_unity_communication_port(self):
         """Returns the communication port for SoundscapeVR Unity."""
         return self.__config["SoundscapeVRUnityCommunicationPort"]
+    
+    def __log_communications(self):
+        return bool(self.__config["LogCommunications"])
 
     def __encoder_ambisonic_track_name(self):
         """Returns the name of the encoder ambisonic track."""

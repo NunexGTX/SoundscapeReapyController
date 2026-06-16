@@ -1,9 +1,14 @@
 import asyncio
 import socket
 import logging
+from pathlib import Path
 from jsonUtils.SoundscapeReapyControllerConfig import SoundscapeReapyControllerConfig
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[logging.StreamHandler()],
+    format="%(name)s %(levelname)s %(message)s",
+)
 
 class SoundscapeVRCommunicationsService:
     def __init__(self, config: SoundscapeReapyControllerConfig):
@@ -15,6 +20,13 @@ class SoundscapeVRCommunicationsService:
         self.__server_socket: socket.socket | None = None
         self.__client_socket: socket.socket | None = None
         self.__is_connected = False
+
+        if config.LogCommunications:
+            log_path = Path(__file__).parent.parent / "logs" / "SoundscapeVR_communication.log"
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            file_handler = logging.FileHandler(log_path)
+            file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+            self.__logger.addHandler(file_handler)
 
     @property
     def is_connected(self):
