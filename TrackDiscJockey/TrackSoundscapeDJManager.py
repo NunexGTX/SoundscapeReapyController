@@ -68,7 +68,7 @@ class TrackSoundscapeDJManager:
         }
 
         #Set project sample rate
-        self.__sample_rate = 96000
+        self.__sample_rate = 48000
         RPR.GetSetProjectInfo(project.id, "PROJECT_SRATE_USE", 1.0, True)
         RPR.GetSetProjectInfo(project.id, "PROJECT_SRATE", self.__sample_rate, True)
 
@@ -264,7 +264,7 @@ class TrackSoundscapeDJManager:
                 #Item starts at the delay offset, so trim its length to end exactly at the loop boundary
                 item.length = self.__CurrentMaxAudioDuration - delay
 
-                self.__project.cursor_position = 0 #Get cursor back to 0
+            self.__project.cursor_position = 0 #Get cursor back to 0
 
         self.__Set_Track_Channels(newTrack,audioTrackInfo.ambisonic)
         ambi_source_index = self.__SetTrackRedirect(newTrack,audioTrackInfo.ambisonic)
@@ -342,8 +342,8 @@ class TrackSoundscapeDJManager:
     def __SetAmbisonicTrackEncoderRedirect(self,source_track: reapy.Track, num_channels = 4):
         send = source_track.add_send(self.__EncoderAmbisonic)
 
-        # Encode: start_ch (0) | (num_channels - 1) << 10
-        ch_value = 0 | ((num_channels - 1) << 10)  # = 3072 for 4ch
+        # Encode: (num_channel_pairs - 1) << 10, where num_channel_pairs = num_channels // 2
+        ch_value = (num_channels // 2) << 10 # = 1024 for 4ch
         
         # Get the raw REAPER track pointer and send index
         send_idx = send.index
@@ -360,12 +360,13 @@ class TrackSoundscapeDJManager:
             self.__logger.warning(f"source_position received for unknown UUID {soundUUID}")
             return False
         
+        volume_db = 0
         if not soundTrack.ambisonic:
             # Update Sparta plugin source position
             self.__AmbiENC.SpeakerPositions(soundTrack.ambiSourceIndex, position_angles)
-
-        # Calculate and apply distance attenuation
-        volume_db = self.__CalculateDistanceDB(distanceRadius)
+            # Calculate and apply distance attenuation
+            volume_db = self.__CalculateDistanceDB(distanceRadius)
+        
         linearVolume = self.__db_to_linear(volume_db)*soundTrack.VolumeGain
         RPR.SetMediaTrackInfo_Value(soundTrack.Track.id,"D_VOL",linearVolume)
 
