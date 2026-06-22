@@ -210,7 +210,8 @@ __marimo__/
 .vscode/
 
 #Ignore audio files
-Sounds/*.{mp3,wav,flac,m4a}
+#Sounds/*.{mp3,wav,flac,m4a}
+Sounds/
 
 #Reaper Folders
 Backups/

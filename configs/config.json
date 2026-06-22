@@ -16,8 +16,8 @@
             "MaxInfiniteSoundscapeMinutesTime": 40,
             "MuteBinauralDecoder": false,
             "MuteAmbisonicDecoder": true,
-            "measure_delay": true,
-            "save_delay_measure": true
+            "measure_delay": false,
+            "save_delay_measure": false
         }
     ]
 }

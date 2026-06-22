@@ -5,7 +5,6 @@ from .jsonDealer import jsonDealer
 
 class SoundscapeReapyControllerConfig(jsonDealer):
     _json_location = "../configs/config.json"
-    __soundscape_reapy_controller_dir_flag = "{REAPY_CONTROLLER_DIR}"
 
     __config_default = {
             "ReapyTemplateProjectPath": "{REAPY_CONTROLLER_DIR}/SoundscapeReaper.RPP",
@@ -23,8 +22,8 @@ class SoundscapeReapyControllerConfig(jsonDealer):
             "MaxInfiniteSoundscapeMinutesTime": 40,
             "MuteBinauralDecoder": False,
             "MuteAmbisonicDecoder": False,
-            "measure_delay": True,
-            "save_delay_measure": True
+            "measure_delay": False,
+            "save_delay_measure": False
         }
 
     def __init__(self):
@@ -82,18 +81,12 @@ class SoundscapeReapyControllerConfig(jsonDealer):
     def __reapy_template_project_path(self):
         """Returns the path to the Reapy template project."""
         path = self.__config["ReapyTemplateProjectPath"]
-        if self.__soundscape_reapy_controller_dir_flag in path:
-            return str(Path(path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir()))) #No need to wrap this in path, using the flag already gives the valid path for the OS
-        else:
-            return str(Path(path))
+        return self._get_project_file_path(path)
 
     def __sounds_location(self):
         """Returns the location of the sounds."""
         path = self.__config["SoundsLocation"]
-        if self.__soundscape_reapy_controller_dir_flag in path:
-            return str(Path(path.replace(self.__soundscape_reapy_controller_dir_flag, self._get_reapy_controller_dir()))) #No need to wrap this in path, using the flag already gives the valid path for the OS
-        else:
-            return str(Path(path))
+        return self._get_project_file_path(path)
 
     def __soundscape_vr_unity_communication_port(self):
         """Returns the communication port for SoundscapeVR Unity."""
