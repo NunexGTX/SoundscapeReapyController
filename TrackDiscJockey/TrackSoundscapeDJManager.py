@@ -467,7 +467,11 @@ class TrackSoundscapeDJManager:
             if effectClass is None:
                 self.__logger.warning("A sound effect not yet implemented was attempted to be added to the track")
                 return
-            newEffect = effectClass.add_to_track(soundTrack, effectParams)
+            try:
+                newEffect = effectClass.add_to_track(soundTrack, effectParams)
+            except ValueError as e:
+                self.__logger.warning(f"Could not add effect '{effect_name}': {e}")
+                return
 
             #Add to soundtrack
             soundTrack.newSoundEffect(newEffect)

@@ -56,8 +56,9 @@ class RiReverbs(SoundEffect):
 
     @classmethod
     def add_to_track(cls, soundtrack: SoundTrack, params=_param_defaults) -> 'RiReverbs':
-        from .SoundEffects.ReverbRIR import ReverbRIR
+        if soundtrack.ambisonic:
+            raise ValueError("RiReverbs cannot be applied to ambisonic tracks")
         from .Sparta.MatrixConvReverb import MatrixConvReverb
-        SubClass = MatrixConvReverb if soundtrack.ambisonic else ReverbRIR
+        SubClass = MatrixConvReverb
         fx = soundtrack.Track.add_fx(SubClass.plugin_name)
         return SubClass(fx, params)
