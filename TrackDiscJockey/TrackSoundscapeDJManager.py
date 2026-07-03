@@ -476,6 +476,21 @@ class TrackSoundscapeDJManager:
             #Add to soundtrack
             soundTrack.newSoundEffect(newEffect)
 
+            if effectClass is RiReverbs:
+                self.__same_reverb_mono_sources(soundTrack, effectParams)
+
+    '''This is a patch that will apply the last reverb effect sent by unity to all mono sources
+    This is not an ideal implementation'''
+    def __same_reverb_mono_sources(self, added_soundtrack: SoundTrack, effectParams: list):
+        for soundTrack in self.__SoundTracks:
+            if soundTrack.ambisonic or soundTrack is added_soundtrack:
+                continue
+            existing = next((fx for fx in soundTrack.SoundEffects if isinstance(fx, RiReverbs)), None)
+            if existing is not None:
+                soundTrack.deleteSoundEffect(existing)
+            newEffect = RiReverbs.add_to_track(soundTrack, effectParams)
+            soundTrack.newSoundEffect(newEffect)
+
     def __removeSoundEffect(self, SoundUUID: UUID, effect_name: str):
         soundTrack = self.__FindTrackByUUID(SoundUUID)
         if soundTrack:
