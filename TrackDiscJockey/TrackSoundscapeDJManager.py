@@ -479,8 +479,10 @@ class TrackSoundscapeDJManager:
             #Add to soundtrack
             soundTrack.newSoundEffect(newEffect)
 
+            '''
             if effectClass is RiReverbs:
                 self.__same_reverb_mono_sources(soundTrack, effectParams)
+            '''
 
     '''This is a patch that will apply the last reverb effect sent by unity to all mono sources
     This is not an ideal implementation'''
