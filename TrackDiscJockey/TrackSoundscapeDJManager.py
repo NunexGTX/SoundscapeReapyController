@@ -134,6 +134,9 @@ class TrackSoundscapeDJManager:
         elif command == "new_soundscape":
             self.__NewSoundscape(int(message["Duration"]),bool(message["Loop"]))
             return "New Soundscape started"
+        
+        elif command == "head_rotation":
+            self.__AmbiBIN.rotation(float(message["Yaw"]),float(message["Pitch"]),float(message["Roll"]))
 
         elif command == "start_soundscape":
             self.__StartSoundscape(int(message["timestamp"]))
