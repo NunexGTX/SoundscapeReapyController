@@ -10,6 +10,8 @@ config = None
 communicator = None
 ReapyManager = None
 
+DISCONNECT_END_SOUNDSCAPE_DELAY_MS = 5000
+
 def ReapyInit():
     global project, config
     print("SoundscapeVReapy Initializing...")
@@ -72,11 +74,14 @@ async def main():
             await communicator.sendResponse(response)
 
         except (ConnectionResetError, OSError):
-            # This catches the disconnect. 
-            # The service handles cleanup internally, so we just loop back 
+            # This catches the disconnect.
+            # The service handles cleanup internally, so we just loop back
             # and wait for a new connection.
             print("Unity client disconnected. Waiting for a new session...")
-            continue 
+            await asyncio.sleep(DISCONNECT_END_SOUNDSCAPE_DELAY_MS/1000)
+            print("Forcefully Ending Soundscape due to lost connection, without a successful reconnection.")
+            ReapyManager.CommandReceive('{"command": "end_soundscape"}') #Ends the soundscape
+            continue
         except asyncio.CancelledError:
             Exit(communicator)
             break

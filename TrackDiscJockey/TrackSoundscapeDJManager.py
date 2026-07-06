@@ -49,7 +49,7 @@ class TrackSoundscapeDJManager:
         self.__AmbiDEC = AmbisonicDECoder(self.__DecoderAmbisonic.fxs[AmbisonicDECoder.plugin_name],self.__AmbisonicOrder)
         self.__AmbiBIN = AmbisonicBINaural(self.__DecoderBinaural.fxs[AmbisonicBINaural.plugin_name],self.__AmbisonicOrder)
 
-        self.__TrackSelectAddNewNext = project._get_track_by_name(reapy_controller_config.DecoderAmbisonicTrackName) #The track to preselect before adding a new track
+        self.__TrackSelectAddNewNext = project._get_track_by_name("HO-SIRR") #The track to preselect before adding a new track
         self.__InitTrackCount = reapy_controller_config.TrackChannels
 
         self.__soundscapeTime = 0 #if its 0 its supposed to play forever
@@ -136,7 +136,11 @@ class TrackSoundscapeDJManager:
             return "New Soundscape started"
         
         elif command == "head_rotation":
-            self.__AmbiBIN.rotation(float(message["Yaw"]),float(message["Pitch"]),float(message["Roll"]))
+            if self.__reapy_controller_config.BinauralRotationUpdate:
+                self.__AmbiBIN.rotation(float(message["yaw"]),float(message["pitch"]),float(message["roll"]))
+                return "Head Rotation Updated"
+            else:
+                return "Head Rotation Ignored"
 
         elif command == "start_soundscape":
             self.__StartSoundscape(int(message["timestamp"]))
@@ -327,7 +331,7 @@ class TrackSoundscapeDJManager:
     def __SetNormalTrackEncoderRedirect(self,source_track: reapy.Track):
         #First set the new receive count in the encoder
         self.__MonoAudiosCounter += 1
-        self.__AmbiENC.setNumSources(self.__MonoAudiosCounter+1)
+        self.__AmbiENC.setNumSources(self.__MonoAudiosCounter)
 
         send = source_track.add_send(self.__EncoderMono)
 

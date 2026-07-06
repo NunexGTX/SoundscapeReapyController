@@ -5,6 +5,7 @@
             "SoundsLocation": "{REAPY_CONTROLLER_DIR}/Sounds",
             "SoundscapeVRUnityCommunicationPort": 6337,
             "LogCommunications": true,
+            "BinauralRotationUpdate": true,
             "EncoderAmbisonicTrackName": "EncoderAmbisonic1stOrderAudio",
             "EncoderMonoAudioTrackName": "EncoderMonoAudio",
             "DecoderAmbisonicTrackName": "DecoderAmbisonic",

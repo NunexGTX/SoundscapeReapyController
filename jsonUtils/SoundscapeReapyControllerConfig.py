@@ -11,6 +11,7 @@ class SoundscapeReapyControllerConfig(jsonDealer):
             "SoundsLocation": "{REAPY_CONTROLLER_DIR}/Sounds",
             "SoundscapeVRUnityCommunicationPort": 6337,
             "LogCommunications": True,
+            "BinauralRotationUpdate": False,
             "EncoderAmbisonicTrackName": "EncoderAmbisonic1stOrderAudio",
             "EncoderMonoAudioTrackName": "EncoderMonoAudio",
             "DecoderAmbisonicTrackName": "DecoderAmbisonic",
@@ -64,6 +65,7 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         self.SoundsLocation = self.__sounds_location()
         self.SoundscapeVRUnityCommunicationPort = self.__soundscape_vr_unity_communication_port()
         self.LogCommunications = self.__log_communications()
+        self.BinauralRotationUpdate = self.__binaural_rotation_update()
         self.EncoderMonoAudioTrackName = self.__encoder_mono_audio_track_name()
         self.EncoderAmbisonicTrackName = self.__encoder_ambisonic_track_name()
         self.DecoderAmbisonicTrackName = self.__decoder_ambisonic_track_name()
@@ -94,6 +96,9 @@ class SoundscapeReapyControllerConfig(jsonDealer):
     
     def __log_communications(self):
         return bool(self.__config["LogCommunications"])
+    
+    def __binaural_rotation_update(self):
+        return bool(self.__config["BinauralRotationUpdate"])
 
     def __encoder_ambisonic_track_name(self):
         """Returns the name of the encoder ambisonic track."""
