@@ -9,8 +9,14 @@ project = None
 config = None
 communicator = None
 ReapyManager = None
+_end_soundscape_task: asyncio.Task | None = None
 
 DISCONNECT_END_SOUNDSCAPE_DELAY_MS = 5000
+
+async def _delayed_end_soundscape():
+    await asyncio.sleep(DISCONNECT_END_SOUNDSCAPE_DELAY_MS / 1000)
+    print("Forcefully Ending Soundscape due to lost connection, without a successful reconnection.")
+    ReapyManager.CommandReceive('{"command": "end_soundscape"}')
 
 def ReapyInit():
     global project, config
@@ -62,6 +68,8 @@ async def main():
             # If we aren't connected (first time or after a disconnect), wait.
             if not communicator.is_connected:
                 await communicator.wait_for_connection()
+                if _end_soundscape_task and not _end_soundscape_task.done():
+                    _end_soundscape_task.cancel()
 
             request = await communicator.receiveRequest()
             
@@ -77,10 +85,9 @@ async def main():
             # This catches the disconnect.
             # The service handles cleanup internally, so we just loop back
             # and wait for a new connection.
+            global _end_soundscape_task
             print("Unity client disconnected. Waiting for a new session...")
-            await asyncio.sleep(DISCONNECT_END_SOUNDSCAPE_DELAY_MS/1000)
-            print("Forcefully Ending Soundscape due to lost connection, without a successful reconnection.")
-            ReapyManager.CommandReceive('{"command": "end_soundscape"}') #Ends the soundscape
+            _end_soundscape_task = asyncio.create_task(_delayed_end_soundscape())
             continue
         except asyncio.CancelledError:
             Exit(communicator)
