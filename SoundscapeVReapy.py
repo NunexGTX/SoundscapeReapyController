@@ -9,7 +9,7 @@ project = None
 config = None
 communicator = None
 ReapyManager = None
-_end_soundscape_task: asyncio.Task | None = None
+_end_soundscape_task = None
 
 DISCONNECT_END_SOUNDSCAPE_DELAY_MS = 5000
 
@@ -57,7 +57,7 @@ def Exit(communicator: SoundscapeVRCommunicationsService):
     print("Goodbye...")
 
 async def main():
-    global communicator, ReapyManager
+    global communicator, ReapyManager, _end_soundscape_task
     communicator = SoundscapeVRCommunicationsService(config)
     ReapyManager = TrackSoundscapeDJManager(project, config)
 
@@ -85,7 +85,6 @@ async def main():
             # This catches the disconnect.
             # The service handles cleanup internally, so we just loop back
             # and wait for a new connection.
-            global _end_soundscape_task
             print("Unity client disconnected. Waiting for a new session...")
             _end_soundscape_task = asyncio.create_task(_delayed_end_soundscape())
             continue
