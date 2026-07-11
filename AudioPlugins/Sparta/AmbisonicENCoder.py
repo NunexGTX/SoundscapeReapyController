@@ -54,7 +54,7 @@ class AmbisonicENCoder(AudioPluginController):
         self.TrackFX.params[2] = self.__NormTypeVals[normType_val]
 
     def setNumSources(self,numSources_val):
-        self.TrackFX.params[3] = self._param_val_calc(numSources_val,self.__source_range[0],self.__source_range[1])
+        self.TrackFX.params[3] = self._param_val_calc_discrete(numSources_val,self.__source_range[0],self.__source_range[1])
         self.Sources = numSources_val #Keep the cached count in sync with the plugin parameter
     
     '''Setting speaker array positions'''
