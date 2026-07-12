@@ -70,6 +70,13 @@ jobs:
           sed -i "s|^@startuml .*|@startuml ${{ env.UML_FILE_NAME }}|" \
             "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.puml"
 
+          # Group the classes into package boxes, and add <<module>> nodes for class-less
+          # modules (the SoundscapeVReapy entry point), which pyreverse cannot draw.
+          python .github/scripts/postprocess_puml.py \
+            "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.puml" \
+            --ignore="${{ env.IGNORE_DIRS }}" \
+            "${targets[@]}"
+
       - name: Render PlantUML to SVG
         run: |
           puml="${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.puml"
