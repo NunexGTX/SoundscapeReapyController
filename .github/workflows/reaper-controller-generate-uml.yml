@@ -21,21 +21,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
+ 
       - name: Remove old diagram
         run: rm -f "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.svg" || true
-
+ 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Install pyreverse (via pylint)
-        run: pip install pylint
-
+ 
+      - name: Install pyreverse (via pylint) and Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+          pip install pylint
+ 
       - name: Create output folder
         run: mkdir -p "${{ env.UML_OUTPUT_PATH }}"
-
+ 
       - name: Generate UML class diagram
         # -o svg          : output format
         # -p NAME         : project name, used in output filename (classes_NAME.svg)
@@ -46,16 +49,17 @@ jobs:
             --ignore="${{ env.IGNORE_DIRS }}" \
             -d "${{ env.UML_OUTPUT_PATH }}" \
             "${{ env.CODE_PATH }}"
-
+ 
       - name: Rename output and drop the packages diagram
         run: |
           # pyreverse always produces two files: classes_NAME.svg and packages_NAME.svg.
           # We only want the class diagram, renamed to the requested filename.
           mv "${{ env.UML_OUTPUT_PATH }}classes_${{ env.UML_FILE_NAME }}.svg" "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.svg"
           rm -f "${{ env.UML_OUTPUT_PATH }}packages_${{ env.UML_FILE_NAME }}.svg"
-
+ 
       - uses: EndBug/add-and-commit@v9
         with:
           author_name: 'UML Bot'
           message: 'Generate Python UML (${{ github.workflow }})'
           author_email: 41898282+uml-bot[bot]@users.noreply.github.com
+
