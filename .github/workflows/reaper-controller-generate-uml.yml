@@ -22,27 +22,29 @@ jobs:
       - uses: actions/checkout@v4
  
       - name: Remove old diagram
-        run: rm -f "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.svg" || true
- 
+        run: |
+          rm -f "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.puml" \
+                "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.svg"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
- 
-      - name: Install pyreverse (via pylint) and Graphviz
+
+      - name: Install pyreverse (via pylint) and PlantUML
         run: |
           sudo apt-get update
-          sudo apt-get install -y graphviz
+          sudo apt-get install -y plantuml
           pip install pylint
- 
+
       - name: Create output folder
         run: mkdir -p "${{ env.UML_OUTPUT_PATH }}"
- 
-      - name: Generate UML class diagram
+
+      - name: Generate PlantUML source
         # pyreverse must be given each package/module: handed the repo root it treats it
         # as a single package, fails to import it and emits an empty diagram (with exit 0).
-        # -o svg   : output format
-        # -p NAME  : project name, used in output filename (classes_NAME.svg)
+        # -o puml  : emit PlantUML source rather than a rendered image
+        # -p NAME  : project name, used in output filename (classes_NAME.puml)
         # --ignore : comma-separated file/dir basenames to skip (applies recursively)
         # -d       : output directory
         run: |
@@ -52,27 +54,35 @@ jobs:
           done
           echo "Analysing: ${targets[*]}"
 
-          pyreverse -o svg -p "${{ env.UML_FILE_NAME }}" \
+          pyreverse -o puml -p "${{ env.UML_FILE_NAME }}" \
             --ignore="${{ env.IGNORE_DIRS }}" \
             -d "${{ env.UML_OUTPUT_PATH }}" \
             "${targets[@]}"
 
-      - name: Rename output and drop the packages diagram
-        run: |
-          # pyreverse always produces two files: classes_NAME.svg and packages_NAME.svg.
+          # pyreverse always produces two files: classes_NAME.puml and packages_NAME.puml.
           # We only want the class diagram, renamed to the requested filename.
-          classes="${{ env.UML_OUTPUT_PATH }}classes_${{ env.UML_FILE_NAME }}.svg"
+          mv "${{ env.UML_OUTPUT_PATH }}classes_${{ env.UML_FILE_NAME }}.puml" \
+             "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.puml"
+          rm -f "${{ env.UML_OUTPUT_PATH }}packages_${{ env.UML_FILE_NAME }}.puml"
+
+          # PlantUML names its output after the diagram name on the @startuml line, not
+          # after the file, so keep the two in step or we'd render classes_NAME.svg.
+          sed -i "s|^@startuml .*|@startuml ${{ env.UML_FILE_NAME }}|" \
+            "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.puml"
+
+      - name: Render PlantUML to SVG
+        run: |
+          puml="${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.puml"
 
           # pyreverse exits 0 even when it parsed nothing, so an empty diagram would be
           # committed silently. Catch that here instead.
-          if ! grep -q '<g id="node' "$classes"; then
+          if ! grep -q '^class ' "$puml"; then
             echo "::error::Generated class diagram contains no classes."
             exit 1
           fi
 
-          mv "$classes" "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.svg"
-          rm -f "${{ env.UML_OUTPUT_PATH }}packages_${{ env.UML_FILE_NAME }}.svg"
- 
+          plantuml -tsvg "$puml"
+
       - uses: EndBug/add-and-commit@v9
         with:
           author_name: 'UML Bot'
