@@ -1,13 +1,13 @@
 @startuml SoundscapeReapyController-UML
-set namespaceSeparator none
-class "AmbisonicBINaural" as AudioPlugins.Sparta.AmbisonicBinaural.AmbisonicBINaural {
+set namespaceSeparator .
+class "AmbisonicBINaural" as AudioPlugins.Sparta.AmbisonicBINaural {
   plugin_name : str
   rotation(yaw: float, pitch: float, roll: float)
 }
-class "AmbisonicDECoder" as AudioPlugins.Sparta.AmbisonicDECoder.AmbisonicDECoder {
+class "AmbisonicDECoder" as AudioPlugins.Sparta.AmbisonicDECoder {
   plugin_name : str
 }
-class "AmbisonicENCoder" as AudioPlugins.Sparta.AmbisonicENCoder.AmbisonicENCoder {
+class "AmbisonicENCoder" as AudioPlugins.Sparta.AmbisonicENCoder {
   Sources : int
   plugin_name : str
   SpeakerPositions(source_number, position)
@@ -16,24 +16,24 @@ class "AmbisonicENCoder" as AudioPlugins.Sparta.AmbisonicENCoder.AmbisonicENCode
   setSpeakerAzim(source_number, azim_value)
   setSpeakerElevation(source_number, elevation_value)
 }
-class "AudioData" as jsonUtils.AudioData.AudioData {
+class "AudioData" as jsonUtils.AudioData {
   ambisonic : bool
   fileName : str
   sound_id : str
   sound_name : str
 }
-class "AudioPluginController" as AudioPlugins.AudioPluginController.AudioPluginController {
+class "AudioPluginController" as AudioPlugins.AudioPluginController {
   TrackFX
   plugin_name : str
   sliderVals : tuple
 }
-class "AudiosData" as jsonUtils.AudiosData.AudiosData {
+class "AudiosData" as jsonUtils.AudiosData {
   AudiosInfo : list
   GetAudioFileInfo(id: str) -> AudioData
 }
-class "ControllerWorkspace" as TrackDiscJockey.ControllerWorkspace.ControllerWorkspace {
+class "ControllerWorkspace" as TrackDiscJockey.ControllerWorkspace {
 }
-class "Echo" as AudioPlugins.SoundEffects.Echo.Echo {
+class "Echo" as AudioPlugins.SoundEffects.Echo {
   effectParamsList : dict
   plugin_name : str
   setApplyEcho(enabled: bool)
@@ -43,7 +43,7 @@ class "Echo" as AudioPlugins.SoundEffects.Echo.Echo {
   setWetMix(value: float)
   updateSoundEffectParams(params: list)
 }
-class "HighLowPassFilter" as AudioPlugins.SoundEffects.HighLowPassFilter.HighLowPassFilter {
+class "HighLowPassFilter" as AudioPlugins.SoundEffects.HighLowPassFilter {
   effectParamsList : dict
   plugin_name : str
   setApplyFilter(enabled: bool)
@@ -51,13 +51,13 @@ class "HighLowPassFilter" as AudioPlugins.SoundEffects.HighLowPassFilter.HighLow
   setLowPassFreq(freq: float)
   updateSoundEffectParams(params: list)
 }
-class "MatrixConvReverb" as AudioPlugins.Sparta.MatrixConvReverb.MatrixConvReverb {
+class "MatrixConvReverb" as AudioPlugins.Sparta.MatrixConvReverb {
   plugin_name : str
 }
-class "MultiConvReverb" as AudioPlugins.Sparta.MultiConvReverb.MultiConvReverb {
+class "MultiConvReverb" as AudioPlugins.Sparta.MultiConvReverb {
   plugin_name : str
 }
-class "Occlusion" as AudioPlugins.SoundEffects.Occlusion.Occlusion {
+class "Occlusion" as AudioPlugins.SoundEffects.Occlusion {
   effectParamsList : dict
   plugin_name : str
   setApplyOcclusion(enabled: bool)
@@ -68,7 +68,7 @@ class "Occlusion" as AudioPlugins.SoundEffects.Occlusion.Occlusion {
   setMidFreq(value: float)
   updateSoundEffectParams(params: list)
 }
-class "PlayDelayMeasure" as Debug.PerformanceMonitoring.PlayDelayMeasure.PlayDelayMeasure {
+class "PlayDelayMeasure" as Debug.PerformanceMonitoring.PlayDelayMeasure {
   clock_offset : int
   delays_file : str
   print_delay_message : bool
@@ -77,23 +77,23 @@ class "PlayDelayMeasure" as Debug.PerformanceMonitoring.PlayDelayMeasure.PlayDel
   save_measure_to_file(delay_time)
   set_clock_offset(offset: int)
 }
-class "ReverbRIR" as AudioPlugins.SoundEffects.ReverbRIR.ReverbRIR {
+class "ReverbRIR" as AudioPlugins.SoundEffects.ReverbRIR {
   plugin_name : str
 }
-class "RiReverbs" as AudioPlugins.RiReverbs.RiReverbs {
+class "RiReverbs" as AudioPlugins.RiReverbs {
   effectParamsList : dict
   add_to_track(soundtrack: SoundTrack, params) -> 'RiReverbs'
   setApplyReverb(enabled: bool)
   setRirPreset(rir_preset: str)
   updateSoundEffectParams(params: list)
 }
-class "SoundEffect" as AudioPlugins.SoundEffect.SoundEffect {
+class "SoundEffect" as AudioPlugins.SoundEffect {
   effectParamsList : NoneType
   add_to_track(soundtrack, initial_params: list) -> 'SoundEffect'
   remove_from_track()
   {abstract}updateSoundEffectParams(params: list)
 }
-class "SoundTrack" as TrackDiscJockey.SoundTrack.SoundTrack {
+class "SoundTrack" as TrackDiscJockey.SoundTrack {
   AudioData
   AudioID
   SoundEffects : list
@@ -114,7 +114,7 @@ class "SoundTrack" as TrackDiscJockey.SoundTrack.SoundTrack {
   newSoundEffect(soundFX: SoundEffect)
   unmute()
 }
-class "SoundscapeReapyControllerConfig" as jsonUtils.SoundscapeReapyControllerConfig.SoundscapeReapyControllerConfig {
+class "SoundscapeReapyControllerConfig" as jsonUtils.SoundscapeReapyControllerConfig {
   AmbisonicOrder : int
   BinauralRotationUpdate
   DecoderAmbisonicTrackName
@@ -135,7 +135,7 @@ class "SoundscapeReapyControllerConfig" as jsonUtils.SoundscapeReapyControllerCo
   TrackChannels : int
   config_json
 }
-class "SoundscapeVRCommunicationsService" as SoundscapeVRCommunications.SoundscapeVRCommunicationsService.SoundscapeVRCommunicationsService {
+class "SoundscapeVRCommunicationsService" as SoundscapeVRCommunications.SoundscapeVRCommunicationsService {
   is_connected
   disconnect()
   receiveRequest() -> str
@@ -143,26 +143,43 @@ class "SoundscapeVRCommunicationsService" as SoundscapeVRCommunications.Soundsca
   start()
   wait_for_connection()
 }
-class "TrackSoundscapeDJManager" as TrackDiscJockey.TrackSoundscapeDJManager.TrackSoundscapeDJManager {
+class "TrackSoundscapeDJManager" as TrackDiscJockey.TrackSoundscapeDJManager {
   measure_delay
   CommandReceive(msg: str) -> str
 }
-class "jsonDealer" as jsonUtils.jsonDealer.jsonDealer {
+class "jsonDealer" as jsonUtils.jsonDealer {
 }
-AudioPlugins.RiReverbs.RiReverbs --|> AudioPlugins.SoundEffect.SoundEffect
-AudioPlugins.SoundEffect.SoundEffect --|> AudioPlugins.AudioPluginController.AudioPluginController
-AudioPlugins.SoundEffects.Echo.Echo --|> AudioPlugins.SoundEffect.SoundEffect
-AudioPlugins.SoundEffects.HighLowPassFilter.HighLowPassFilter --|> AudioPlugins.SoundEffect.SoundEffect
-AudioPlugins.SoundEffects.Occlusion.Occlusion --|> AudioPlugins.SoundEffect.SoundEffect
-AudioPlugins.SoundEffects.ReverbRIR.ReverbRIR --|> AudioPlugins.RiReverbs.RiReverbs
-AudioPlugins.Sparta.AmbisonicBinaural.AmbisonicBINaural --|> AudioPlugins.AudioPluginController.AudioPluginController
-AudioPlugins.Sparta.AmbisonicDECoder.AmbisonicDECoder --|> AudioPlugins.AudioPluginController.AudioPluginController
-AudioPlugins.Sparta.AmbisonicENCoder.AmbisonicENCoder --|> AudioPlugins.AudioPluginController.AudioPluginController
-AudioPlugins.Sparta.MatrixConvReverb.MatrixConvReverb --|> AudioPlugins.RiReverbs.RiReverbs
-AudioPlugins.Sparta.MultiConvReverb.MultiConvReverb --|> AudioPlugins.RiReverbs.RiReverbs
-Debug.PerformanceMonitoring.PlayDelayMeasure.PlayDelayMeasure --|> TrackDiscJockey.ControllerWorkspace.ControllerWorkspace
-jsonUtils.AudiosData.AudiosData --|> jsonUtils.jsonDealer.jsonDealer
-jsonUtils.SoundscapeReapyControllerConfig.SoundscapeReapyControllerConfig --|> jsonUtils.jsonDealer.jsonDealer
-jsonUtils.jsonDealer.jsonDealer --|> TrackDiscJockey.ControllerWorkspace.ControllerWorkspace
-jsonUtils.AudioData.AudioData --o TrackDiscJockey.SoundTrack.SoundTrack : AudioData
+AudioPlugins.RiReverbs --|> AudioPlugins.SoundEffect
+AudioPlugins.SoundEffect --|> AudioPlugins.AudioPluginController
+AudioPlugins.SoundEffects.Echo --|> AudioPlugins.SoundEffect
+AudioPlugins.SoundEffects.HighLowPassFilter --|> AudioPlugins.SoundEffect
+AudioPlugins.SoundEffects.Occlusion --|> AudioPlugins.SoundEffect
+AudioPlugins.SoundEffects.ReverbRIR --|> AudioPlugins.RiReverbs
+AudioPlugins.Sparta.AmbisonicBINaural --|> AudioPlugins.AudioPluginController
+AudioPlugins.Sparta.AmbisonicDECoder --|> AudioPlugins.AudioPluginController
+AudioPlugins.Sparta.AmbisonicENCoder --|> AudioPlugins.AudioPluginController
+AudioPlugins.Sparta.MatrixConvReverb --|> AudioPlugins.RiReverbs
+AudioPlugins.Sparta.MultiConvReverb --|> AudioPlugins.RiReverbs
+Debug.PerformanceMonitoring.PlayDelayMeasure --|> TrackDiscJockey.ControllerWorkspace
+jsonUtils.AudiosData --|> jsonUtils.jsonDealer
+jsonUtils.SoundscapeReapyControllerConfig --|> jsonUtils.jsonDealer
+jsonUtils.jsonDealer --|> TrackDiscJockey.ControllerWorkspace
+jsonUtils.AudioData --o TrackDiscJockey.SoundTrack : AudioData
+class "SoundscapeVReapy" as SoundscapeVReapy <<module>> {
+  project
+  config
+  communicator
+  ReapyManager
+  _end_soundscape_task
+  DISCONNECT_END_SOUNDSCAPE_DELAY_MS
+  _delayed_end_soundscape()
+  ReapyInit()
+  check_reaper_running()
+  Reset()
+  Exit(communicator)
+  main()
+}
+SoundscapeVReapy ..> SoundscapeVRCommunications.SoundscapeVRCommunicationsService
+SoundscapeVReapy ..> TrackDiscJockey.TrackSoundscapeDJManager
+SoundscapeVReapy ..> jsonUtils.SoundscapeReapyControllerConfig
 @enduml
