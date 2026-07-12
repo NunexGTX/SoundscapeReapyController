@@ -14,10 +14,9 @@ jobs:
       contents: write
 
     env:
-      CODE_PATH: "."
       UML_OUTPUT_PATH: "./docs/UMLs/"
       UML_FILE_NAME: "SoundscapeReapyController-UML"
-      IGNORE_DIRS: "tests"
+      IGNORE_DIRS: "tests,__pycache__"
 
     steps:
       - uses: actions/checkout@v4
@@ -40,21 +39,38 @@ jobs:
         run: mkdir -p "${{ env.UML_OUTPUT_PATH }}"
  
       - name: Generate UML class diagram
-        # -o svg          : output format
-        # -p NAME         : project name, used in output filename (classes_NAME.svg)
-        # --ignore        : comma-separated list of file/dir basenames to skip (applies recursively)
-        # -d              : output directory
+        # pyreverse must be given each package/module: handed the repo root it treats it
+        # as a single package, fails to import it and emits an empty diagram (with exit 0).
+        # -o svg   : output format
+        # -p NAME  : project name, used in output filename (classes_NAME.svg)
+        # --ignore : comma-separated file/dir basenames to skip (applies recursively)
+        # -d       : output directory
         run: |
+          targets=(*.py)
+          for dir in */; do
+            [ -f "${dir}__init__.py" ] && targets+=("${dir%/}")
+          done
+          echo "Analysing: ${targets[*]}"
+
           pyreverse -o svg -p "${{ env.UML_FILE_NAME }}" \
             --ignore="${{ env.IGNORE_DIRS }}" \
             -d "${{ env.UML_OUTPUT_PATH }}" \
-            "${{ env.CODE_PATH }}"
- 
+            "${targets[@]}"
+
       - name: Rename output and drop the packages diagram
         run: |
           # pyreverse always produces two files: classes_NAME.svg and packages_NAME.svg.
           # We only want the class diagram, renamed to the requested filename.
-          mv "${{ env.UML_OUTPUT_PATH }}classes_${{ env.UML_FILE_NAME }}.svg" "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.svg"
+          classes="${{ env.UML_OUTPUT_PATH }}classes_${{ env.UML_FILE_NAME }}.svg"
+
+          # pyreverse exits 0 even when it parsed nothing, so an empty diagram would be
+          # committed silently. Catch that here instead.
+          if ! grep -q '<g id="node' "$classes"; then
+            echo "::error::Generated class diagram contains no classes."
+            exit 1
+          fi
+
+          mv "$classes" "${{ env.UML_OUTPUT_PATH }}${{ env.UML_FILE_NAME }}.svg"
           rm -f "${{ env.UML_OUTPUT_PATH }}packages_${{ env.UML_FILE_NAME }}.svg"
  
       - uses: EndBug/add-and-commit@v9
