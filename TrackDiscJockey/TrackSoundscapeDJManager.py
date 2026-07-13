@@ -76,7 +76,7 @@ class TrackSoundscapeDJManager:
         self.__ReaperTimeSelection.loop()
         self.__AmbiENC.setNumSources(1)
         self.__setTracksForAmbisonic()
-        self.__setAmbisonicDencoderPreset()
+        self.__setAmbisonicDecoderPreset()
         self.__setTracksVolumes()
         self.__setDecoderMutes()
 
@@ -91,9 +91,9 @@ class TrackSoundscapeDJManager:
 
     def __setAmbisonicDencoderPreset(self):
         if self.__reapy_controller_config.UseAmbisonicDecoderPreset:
-            self.TrackFX.preset = self.__reapy_controller_config.AmbisonicDecoderPreset
-            if self.TrackFX.preset != self.__reapy_controller_config.AmbisonicDecoderPreset:
-                print(f"Could not load preset '{self.__reapy_controller_config.AmbisonicDecoderPreset}'. Create it first in REAPER's FX.")
+            self.__AmbiDEC.TrackFX.preset = self.__reapy_controller_config.AmbisonicDecoderPreset
+            if self.__AmbiDEC.TrackFX.preset != self.__reapy_controller_config.AmbisonicDecoderPreset:
+                print(f"Could not load preset '{self.__AmbiDEC.TrackFX}'. Create it first in REAPER's FX.")
 
     def __setTracksVolumes(self):
         #Sets the track's volumes
@@ -487,6 +487,8 @@ class TrackSoundscapeDJManager:
     def __addSoundEffect(self,SoundUUID: UUID, effect_name: str, effectParams: list):
         soundTrack = self.__FindTrackByUUID(SoundUUID)
         if soundTrack:
+            soundTrack.Track.mute()
+
             effectClass = self.__availableSoundEffects.get(effect_name)
             if effectClass is None:
                 self.__logger.warning("A sound effect not yet implemented was attempted to be added to the track")
@@ -499,6 +501,8 @@ class TrackSoundscapeDJManager:
 
             #Add to soundtrack
             soundTrack.newSoundEffect(newEffect)
+
+            soundTrack.Track.unmute()
 
             '''
             if effectClass is RiReverbs:
