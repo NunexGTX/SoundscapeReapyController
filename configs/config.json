@@ -17,6 +17,8 @@
             "MaxInfiniteSoundscapeMinutesTime": 40,
             "MuteBinauralDecoder": false,
             "MuteAmbisonicDecoder": true,
+            "UseAmbisonicDecoderPreset": false,
+            "AmbisonicDecoderPreset": "16_channels_5th_order",
             "measure_delay": false,
             "save_delay_measure": false
         }

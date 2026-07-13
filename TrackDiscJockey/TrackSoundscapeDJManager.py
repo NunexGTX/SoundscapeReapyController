@@ -76,6 +76,7 @@ class TrackSoundscapeDJManager:
         self.__ReaperTimeSelection.loop()
         self.__AmbiENC.setNumSources(1)
         self.__setTracksForAmbisonic()
+        self.__setAmbisonicDencoderPreset()
         self.__setTracksVolumes()
         self.__setDecoderMutes()
 
@@ -87,6 +88,12 @@ class TrackSoundscapeDJManager:
         self.__EncoderMono.set_info_value("I_NCHAN", self.__InitTrackCount)
         self.__DecoderBinaural.set_info_value("I_NCHAN", self.__InitTrackCount)
         self.__DecoderAmbisonic.set_info_value("I_NCHAN", self.__InitTrackCount)
+
+    def __setAmbisonicDencoderPreset(self):
+        if self.__reapy_controller_config.UseAmbisonicDecoderPreset:
+            self.TrackFX.preset = self.__reapy_controller_config.AmbisonicDecoderPreset
+            if self.TrackFX.preset != self.__reapy_controller_config.AmbisonicDecoderPreset:
+                print(f"Could not load preset '{self.__reapy_controller_config.AmbisonicDecoderPreset}'. Create it first in REAPER's FX.")
 
     def __setTracksVolumes(self):
         #Sets the track's volumes

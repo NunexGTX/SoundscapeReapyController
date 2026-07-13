@@ -23,6 +23,8 @@ class SoundscapeReapyControllerConfig(jsonDealer):
             "MaxInfiniteSoundscapeMinutesTime": 40,
             "MuteBinauralDecoder": False,
             "MuteAmbisonicDecoder": False,
+            "UseAmbisonicDecoderPreset": False,
+            "AmbisonicDecoderPreset": "16_channels_5th_order",
             "measure_delay": False,
             "save_delay_measure": False
         }
@@ -77,6 +79,8 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         self.MaxInfiniteSoundscapeMinutesTime = self.__max_inifinite_soundscape_minutes_time()
         self.MuteBinauralDecoder = self.__mute_binaural_decoder()
         self.MuteAmbisonicDecoder = self.__mute_ambisonic_decoder()
+        self.UseAmbisonicDecoderPreset = self.__use_ambisonic_decoder_preset()
+        self.AmbisonicDecoderPreset = self.__ambisonic_decoder_preset()
         self.MeasureDelay = self.__measure_delay()
         self.SaveDelayMeasure = self.__save_delay_measure()
         
@@ -134,6 +138,12 @@ class SoundscapeReapyControllerConfig(jsonDealer):
     
     def __mute_ambisonic_decoder(self):
         return self.__config["MuteAmbisonicDecoder"]
+    
+    def __use_ambisonic_decoder_preset(self):
+        return self.__config["UseAmbisonicDecoderPreset"]
+    
+    def __ambisonic_decoder_preset(self):
+        return self.__config["AmbisonicDecoderPreset"]
     
     def __measure_delay(self):
         return bool(self.__config["measure_delay"])
