@@ -115,6 +115,7 @@ class "SoundTrack" as TrackDiscJockey.SoundTrack {
   unmute()
 }
 class "SoundscapeReapyControllerConfig" as jsonUtils.SoundscapeReapyControllerConfig {
+  AmbisonicDecoderPreset
   AmbisonicOrder : int
   BinauralRotationUpdate
   DecoderAmbisonicTrackName
@@ -133,6 +134,7 @@ class "SoundscapeReapyControllerConfig" as jsonUtils.SoundscapeReapyControllerCo
   SoundsLocation : str
   SoundscapeVRUnityCommunicationPort
   TrackChannels : int
+  UseAmbisonicDecoderPreset
   config_json
 }
 class "SoundscapeVRCommunicationsService" as SoundscapeVRCommunications.SoundscapeVRCommunicationsService {
