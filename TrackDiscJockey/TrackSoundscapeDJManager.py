@@ -89,7 +89,7 @@ class TrackSoundscapeDJManager:
         self.__DecoderBinaural.set_info_value("I_NCHAN", self.__InitTrackCount)
         self.__DecoderAmbisonic.set_info_value("I_NCHAN", self.__InitTrackCount)
 
-    def __setAmbisonicDencoderPreset(self):
+    def __setAmbisonicDecoderPreset(self):
         if self.__reapy_controller_config.UseAmbisonicDecoderPreset:
             self.__AmbiDEC.TrackFX.preset = self.__reapy_controller_config.AmbisonicDecoderPreset
             if self.__AmbiDEC.TrackFX.preset != self.__reapy_controller_config.AmbisonicDecoderPreset:
