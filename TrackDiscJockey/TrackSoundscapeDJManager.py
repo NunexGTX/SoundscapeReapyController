@@ -265,6 +265,9 @@ class TrackSoundscapeDJManager:
 
             newTrack.mute() #Avoid pop
 
+            if not audioTrackInfo.ambisonic:
+                self.__CollapseTakeToMono(newTrack)
+
             if loop:
                 item = newTrack.items[0]
                 RPR.SetMediaItemInfo_Value(item.id, "B_LOOPSRC", 1)  # enable loop source on item
@@ -300,6 +303,13 @@ class TrackSoundscapeDJManager:
             track.set_info_value("I_NCHAN", 2)
         else:
             track.set_info_value("I_NCHAN", 4)
+
+    def __CollapseTakeToMono(self,track: reapy.Track):
+        #The encoder send only carries channel 1, so a stereo source would lose its right channel
+        for item in track.items:
+            for take in item.takes:
+                if take.source.n_channels > 1:
+                    RPR.SetMediaItemTakeInfo_Value(take.id, "I_CHANMODE", 2) #mono (downmix)
 
     def __SetNonLoopTrackDeactivation(self,soundTrack):
         self.__NonLoopSoundtracks.append(soundTrack)
