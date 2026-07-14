@@ -26,6 +26,7 @@ class "AudioPluginController" as AudioPlugins.AudioPluginController {
   TrackFX
   plugin_name : str
   sliderVals : tuple
+  setWet(wet: float)
 }
 class "AudiosData" as jsonUtils.AudiosData {
   AudiosInfo : list
@@ -130,6 +131,8 @@ class "SoundscapeReapyControllerConfig" as jsonUtils.SoundscapeReapyControllerCo
   MuteAmbisonicDecoder
   MuteBinauralDecoder
   ReapyTemplateProjectPath : str
+  ReverbVolumeLevel : float
+  ReverbWetValue : float
   SaveDelayMeasure
   SoundsLocation : str
   SoundscapeVRUnityCommunicationPort
