@@ -54,6 +54,7 @@ class "HighLowPassFilter" as AudioPlugins.SoundEffects.HighLowPassFilter {
 }
 class "MatrixConvReverb" as AudioPlugins.Sparta.MatrixConvReverb {
   plugin_name : str
+  add_to_track(track: reapy.Track, params) -> 'MatrixConvReverb'
 }
 class "MultiConvReverb" as AudioPlugins.Sparta.MultiConvReverb {
   plugin_name : str
