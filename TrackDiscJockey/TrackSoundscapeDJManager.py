@@ -20,6 +20,7 @@ from AudioPlugins.SoundEffects.Echo import Echo
 from AudioPlugins.SoundEffects.Occlusion import Occlusion
 from AudioPlugins.SoundEffects.HighLowPassFilter import HighLowPassFilter
 from AudioPlugins.RiReverbs import RiReverbs
+from AudioPlugins.Sparta.MatrixConvReverb import MatrixConvReverb
 
 logging.basicConfig(level=logging.INFO)
 
@@ -41,6 +42,8 @@ class TrackSoundscapeDJManager:
         self.__EncoderMono = project._get_track_by_name(reapy_controller_config.EncoderMonoAudioTrackName)
         self.__DecoderBinaural = project._get_track_by_name(reapy_controller_config.DecoderBinauralTrackName)
         self.__DecoderAmbisonic = project._get_track_by_name(reapy_controller_config.DecoderAmbisonicTrackName)
+
+        self.__MatrixConvolve = None
 
         self.__MonoAudiosCounter = 0
         self.__AmbisonicOrder = reapy_controller_config.AmbisonicOrder
@@ -187,11 +190,17 @@ class TrackSoundscapeDJManager:
             return "Unmuted Track"
 
         elif command == "add_effect":
-            self.__addSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]),list(message["EffectParams"]))
+            if message["EffectName"] is "reverb":
+                self.__add_reverb_effect(list(message["EffectParams"]))
+            else:
+                self.__addSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]),list(message["EffectParams"]))
             return "Effect Added to Track"
 
         elif command == "remove_effect":
-            self.__removeSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]))
+            if message["EffectName"] is "reverb":
+                self.__remove_reverb_effect()
+            else:
+                self.__removeSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]))
             return "Effect Removed from Track"
 
         elif command == "delete_track":
@@ -391,8 +400,7 @@ class TrackSoundscapeDJManager:
             # Calculate and apply distance attenuation
             volume_db = self.__CalculateDistanceDB(distanceRadius)
         
-        linearVolume = self.__db_to_linear(volume_db)*soundTrack.VolumeGain
-        RPR.SetMediaTrackInfo_Value(soundTrack.Track.id,"D_VOL",linearVolume)
+        self.__SetTrackVolumeDB(volume_db, soundTrack.Track, soundTrack.VolumeGain)
 
         # Save state on the SoundTrack
         soundTrack.positionalRot = position_angles
@@ -402,6 +410,10 @@ class TrackSoundscapeDJManager:
         #unmute track
         #soundTrack.Track.unmute()
         return True
+    
+    def __SetTrackVolumeDB(self, volume: float, track: reapy.Track, gain: float = 1):
+        linearVolume = self.__db_to_linear(volume)*gain
+        RPR.SetMediaTrackInfo_Value(track.id,"D_VOL",linearVolume)
 
     def __CalculateDistanceDB(self, distanceRadius: float) -> float:
         # 0dB at the 1m reference, then -20*log10(distance): -6dB per doubling of distance (every 10x distance is -20dB)
@@ -521,6 +533,18 @@ class TrackSoundscapeDJManager:
             newEffect = RiReverbs.add_to_track(soundTrack, effectParams)
             soundTrack.newSoundEffect(newEffect)
 
+    def __add_reverb_effect(self,effectParams: list):
+        with reapy.inside_reaper:
+            #1 - Add matrix_convolve to ambisonic decoder, if it has not been already added, and activate it with its preset
+            if self.__MatrixConvolve is None:
+                self.__MatrixConvolve = MatrixConvReverb(self.__EncoderAmbisonic.add_fx(MatrixConvReverb.plugin_name,False,False),effectParams) #Do not add if it already has one
+            else:
+                self.__MatrixConvolve.updateSoundEffectParams(effectParams)
+            #2 - Set the usable wet value (20)
+            self.__MatrixConvolve.setWet(self.__reapy_controller_config.ReverbWetValue)
+            #3 - Set a lower volume level
+            self.__SetTrackVolumeDB(self.__reapy_controller_config.ReverbVolumeLevel,self.__EncoderAmbisonic)
+
     def __removeSoundEffect(self, SoundUUID: UUID, effect_name: str):
         soundTrack = self.__FindTrackByUUID(SoundUUID)
         if soundTrack:
@@ -536,6 +560,10 @@ class TrackSoundscapeDJManager:
             
             #remove from soundtrack
             soundTrack.deleteSoundEffect(fxType)
+
+    def __remove_reverb_effect(self):
+        self.__MatrixConvolve.setApplyReverb(False) #Do not remove the FX, not worth it having to reload it next time
+        self.__SetTrackVolumeDB(0.0,self.__EncoderAmbisonic)
 
     
 

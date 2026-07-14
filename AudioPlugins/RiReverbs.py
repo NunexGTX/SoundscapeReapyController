@@ -42,9 +42,10 @@ class RiReverbs(SoundEffect):
         self.updateSoundEffectParams(params)
 
     def updateSoundEffectParams(self, params: list):
-        apply_reverb, rir_preset = params
+        apply_reverb, rir_preset, set_wet = params
         self.setRirPreset(str(rir_preset))
         self.setApplyReverb(bool(apply_reverb))
+        self.setWet(float(set_wet))
 
     def setRirPreset(self, rir_preset: str):
         self.TrackFX.preset = self._RIR_MAP[rir_preset]

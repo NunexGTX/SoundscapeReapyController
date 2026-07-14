@@ -26,7 +26,9 @@ class SoundscapeReapyControllerConfig(jsonDealer):
             "UseAmbisonicDecoderPreset": False,
             "AmbisonicDecoderPreset": "16_channels_5th_order",
             "measure_delay": False,
-            "save_delay_measure": False
+            "save_delay_measure": False,
+            "reverb_wet_value_decimal": 0.2,
+            "reverb_volume_level": -12.0
         }
 
     def __init__(self):
@@ -83,6 +85,8 @@ class SoundscapeReapyControllerConfig(jsonDealer):
         self.AmbisonicDecoderPreset = self.__ambisonic_decoder_preset()
         self.MeasureDelay = self.__measure_delay()
         self.SaveDelayMeasure = self.__save_delay_measure()
+        self.ReverbWetValue = self.__reverb_wet_value()
+        self.ReverbVolumeLevel = self.__reverb_volume_level()
         
     def __reapy_template_project_path(self):
         """Returns the path to the Reapy template project."""
@@ -150,6 +154,12 @@ class SoundscapeReapyControllerConfig(jsonDealer):
     
     def __save_delay_measure(self):
         return bool(self.__config["save_delay_measure"])
+    
+    def __reverb_wet_value(self):
+        return float(self.__config["reverb_wet_value_decimal"])
+    
+    def __reverb_volume_level(self):
+        return float(self.__config["reverb_volume_level"])
     
 #For Debug
 if __name__ == '__main__':

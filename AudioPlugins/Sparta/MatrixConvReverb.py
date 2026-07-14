@@ -6,3 +6,5 @@ from ..RiReverbs import RiReverbs
 class MatrixConvReverb(RiReverbs):
     plugin_name  = "VST: sparta_matrixconv (AALTO) (64ch)"
     _PRESET_NAME = "AmbisonicReverbConvolve"
+
+    _WET_INDEX   = 3

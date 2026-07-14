@@ -1,7 +1,7 @@
 {
     "use_json": true,
     "reverbsRiR": {
-        "Cinema_Room": "CinemaRoomReverb",
+        "CinemaRoom": "CinemaRoomReverb",
         "Parliment":   "AssembleiaRepublicaReverb",
         "Auditorium":  "GulkbenkianReverb"
     }

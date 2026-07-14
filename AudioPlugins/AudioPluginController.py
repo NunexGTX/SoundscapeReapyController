@@ -7,6 +7,8 @@ import base64
 class AudioPluginController(ABC):
     sliderVals = (0,1) #This represents in between which values each parameter must be
 
+    _wet_range = (0,1)
+
     '''Abstract Variables'''
     @property
     @abstractmethod
@@ -49,6 +51,9 @@ class AudioPluginController(ABC):
         #and still floor-decodes to x via min + floor(norm*(count-1)).
         count = max_val-min_val+1
         return (x-min_val+1)/count
+    
+    def setWet(self, wet: float):
+        self.TrackFX.params[self._WET_INDEX] = self._param_val_calc(wet, self._wet_range[0], self._wet_range[1])
 
     
 

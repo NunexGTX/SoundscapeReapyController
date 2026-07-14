@@ -20,7 +20,8 @@
             "UseAmbisonicDecoderPreset": false,
             "AmbisonicDecoderPreset": "16_channels_5th_order",
             "measure_delay": false,
-            "save_delay_measure": false
+            "save_delay_measure": false,
+            "reverb_volume_level": -12.0
         }
     ]
 }
