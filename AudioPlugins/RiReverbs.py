@@ -7,7 +7,7 @@ from .SoundEffect import SoundEffect
 
 class RiReverbs(SoundEffect):
     #_RIR_DIR = Path(__file__).parent.parent / "RiRs"
-    _param_defaults = [False, "Cinema_Room"]  # [apply_reverb, rir_preset]
+    _param_defaults = [False, "Cinema_Room", 0.0]  # [apply_reverb, rir_preset, wet]
     effectParamsList = {}
 
     _JSON_PATH = Path(__file__).parent.parent / "configs" / "RiReverb.json"
@@ -33,8 +33,8 @@ class RiReverbs(SoundEffect):
         self.updateSoundEffectParams(params)
 
     def _checkInitialParams(self, params):
-        if len(params) != 2:
-            raise ValueError("params must be [apply_reverb: bool, rir_preset: str]")
+        if len(params) != 3:
+            raise ValueError("params must be [apply_reverb: bool, rir_preset: str, wet: float]")
         if params[1] not in self._RIR_MAP:
             raise ValueError(f"Unknown rir_preset '{params[1]}'. Available: {list(self._RIR_MAP)}")
 

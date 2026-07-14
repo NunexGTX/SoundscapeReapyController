@@ -190,14 +190,14 @@ class TrackSoundscapeDJManager:
             return "Unmuted Track"
 
         elif command == "add_effect":
-            if message["EffectName"] is "reverb":
+            if message["EffectName"] == "reverb":
                 self.__add_reverb_effect(list(message["EffectParams"]))
             else:
                 self.__addSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]),list(message["EffectParams"]))
             return "Effect Added to Track"
 
         elif command == "remove_effect":
-            if message["EffectName"] is "reverb":
+            if message["EffectName"] == "reverb":
                 self.__remove_reverb_effect()
             else:
                 self.__removeSoundEffect(UUID(message["SoundUUID"]),str(message["EffectName"]))
@@ -534,10 +534,10 @@ class TrackSoundscapeDJManager:
             soundTrack.newSoundEffect(newEffect)
 
     def __add_reverb_effect(self,effectParams: list):
-        with reapy.inside_reaper:
+        with reapy.inside_reaper():
             #1 - Add matrix_convolve to ambisonic decoder, if it has not been already added, and activate it with its preset
             if self.__MatrixConvolve is None:
-                self.__MatrixConvolve = MatrixConvReverb(self.__EncoderAmbisonic.add_fx(MatrixConvReverb.plugin_name,False,False),effectParams) #Do not add if it already has one
+                self.__MatrixConvolve = MatrixConvReverb.add_to_track(self.__EncoderMono,effectParams) #Do not add if it already has one
             else:
                 self.__MatrixConvolve.updateSoundEffectParams(effectParams)
             #2 - Set the usable wet value (20)
@@ -562,8 +562,9 @@ class TrackSoundscapeDJManager:
             soundTrack.deleteSoundEffect(fxType)
 
     def __remove_reverb_effect(self):
-        self.__MatrixConvolve.setApplyReverb(False) #Do not remove the FX, not worth it having to reload it next time
-        self.__SetTrackVolumeDB(0.0,self.__EncoderAmbisonic)
+        with reapy.inside_reaper():
+            self.__MatrixConvolve.setApplyReverb(False) #Do not remove the FX, not worth it having to reload it next time
+            self.__SetTrackVolumeDB(0.0,self.__EncoderAmbisonic)
 
     
 
