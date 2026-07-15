@@ -133,7 +133,6 @@ class "SoundscapeReapyControllerConfig" as jsonUtils.SoundscapeReapyControllerCo
   MuteBinauralDecoder
   ReapyTemplateProjectPath : str
   ReverbVolumeLevel : float
-  ReverbWetValue : float
   SaveDelayMeasure
   SoundsLocation : str
   SoundscapeVRUnityCommunicationPort
