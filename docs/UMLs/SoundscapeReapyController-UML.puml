@@ -26,6 +26,7 @@ class "AudioPluginController" as AudioPlugins.AudioPluginController {
   TrackFX
   plugin_name : str
   sliderVals : tuple
+  getWetIndex()
   setWet(wet: float)
 }
 class "AudiosData" as jsonUtils.AudiosData {
