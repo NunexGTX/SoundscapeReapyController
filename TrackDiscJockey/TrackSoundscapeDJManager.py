@@ -364,8 +364,8 @@ class TrackSoundscapeDJManager:
         # I_SRCCHAN | 1024 = mono flag, index 0 = first channel of source track
         RPR.SetTrackSendInfo_Value(source_track.id, 0, send.index, "I_SRCCHAN", 0 | 1024)
 
-        # Destination increments by 1 each time (0=ch1/2, 2=ch2/3, 3=ch3/4, ...)
-        dst_chan = self.__MonoAudiosCounter-1
+        # Destination is a single mono channel (| 1024 = mono flag); increments by 1 each time (0=ch1, 1=ch2, 2=ch3, ...)
+        dst_chan = (self.__MonoAudiosCounter-1) | 1024
         RPR.SetTrackSendInfo_Value(source_track.id, 0, send.index, "I_DSTCHAN", dst_chan)
 
         self.__AmbiENC.SpeakerPositions(self.__MonoAudiosCounter, (0.0, 0.0)) #Set default value in the beginning
@@ -540,10 +540,8 @@ class TrackSoundscapeDJManager:
                 self.__MatrixConvolve = MatrixConvReverb.add_to_track(self.__EncoderMono,effectParams) #Do not add if it already has one
             else:
                 self.__MatrixConvolve.updateSoundEffectParams(effectParams)
-            #2 - Set the usable wet value (20)
-            self.__MatrixConvolve.setWet(self.__reapy_controller_config.ReverbWetValue)
-            #3 - Set a lower volume level
-            self.__SetTrackVolumeDB(self.__reapy_controller_config.ReverbVolumeLevel,self.__EncoderAmbisonic)
+            #2 - Set a lower volume level
+            self.__SetTrackVolumeDB(self.__reapy_controller_config.ReverbVolumeLevel,self.__EncoderMono)
 
     def __removeSoundEffect(self, SoundUUID: UUID, effect_name: str):
         soundTrack = self.__FindTrackByUUID(SoundUUID)
@@ -564,7 +562,7 @@ class TrackSoundscapeDJManager:
     def __remove_reverb_effect(self):
         with reapy.inside_reaper():
             self.__MatrixConvolve.setApplyReverb(False) #Do not remove the FX, not worth it having to reload it next time
-            self.__SetTrackVolumeDB(0.0,self.__EncoderAmbisonic)
+            self.__SetTrackVolumeDB(0.0,self.__EncoderMono)
 
     
 
