@@ -153,8 +153,8 @@ class TrackSoundscapeDJManager:
                 return "Head Rotation Ignored"
 
         elif command == "start_soundscape":
-            self.__StartSoundscape(int(message["timestamp"]))
-            return "soundscape_started"
+            startTimestamp = self.__StartSoundscape(int(message["timestamp"]))
+            return "soundscape_started:"+str(startTimestamp)
         
         elif command == "no_start_wait":
             self.__SoundscapePlaying = True
@@ -221,10 +221,12 @@ class TrackSoundscapeDJManager:
         self.__NewAudioDurations()
         #self.__project.play()
 
-    def __StartSoundscape(self, timestamp=None):
+    def __StartSoundscape(self, timestamp=None) -> int:
         if self.__nonloop_timer:
             self.__nonloop_timer.cancel()
         self.__project.play()
+
+        start_timestamp = time.time_ns() // 1_000_000
 
         if self.measure_delay and timestamp is not None:
             PlayDelayMeasure.measure_delay(timestamp)
@@ -234,6 +236,8 @@ class TrackSoundscapeDJManager:
             self.__CurrentMaxAudioDuration, self.__DeleteTracksAfterLoop
         )
         self.__nonloop_timer.start()
+
+        return start_timestamp
 
     def __EndSoundscape(self):
         if self.__nonloop_timer:
