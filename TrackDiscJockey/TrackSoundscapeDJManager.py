@@ -320,7 +320,7 @@ class TrackSoundscapeDJManager:
 
     def __Set_Track_Channels(self,track: reapy.Track, ambisonic:bool):
         if not ambisonic:
-            track.set_info_value("I_NCHAN", 2)
+            track.set_info_value("I_NCHAN", 1)
         else:
             track.set_info_value("I_NCHAN", 4)
 
